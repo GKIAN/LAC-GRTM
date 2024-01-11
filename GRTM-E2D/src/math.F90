@@ -81,13 +81,29 @@ module math
       complex(kind = MK), intent(in) :: omg
       real(kind = MK), intent(in) :: wTime, wFreq, rTime
       character(len = *), intent(in) :: wType
-      real(kind = MK) :: omgc
+      real(kind = MK) :: omgc, omga, omgt
       omgc = 2.0_MK * pi * wFreq
       select case(trim(adjustl(wType)))
         case('Ricker')
           s = (omg / omgc) ** 2
           s = s * exp( - s) / wFreq * 2.0_MK / sqrt(pi)
           s = s * exp( - omg * (wTime + rTime) * (0.0_MK, 1.0_MK) )
+        case('Green')
+          s = (1.0_MK, 0.0_MK)
+        case('green')
+          s = omg * (0.0_MK, 1.0_MK)
+        case('GReen')
+          omga = abs(omg)
+          omgt = 2.0_MK * pi / wTime
+          if(omga < omgc + omgt) then
+            if(omga > omgc) then
+              s = 0.5_MK * ( 1.0_MK + cos( (omga - omgc) / omgt * pi ) )
+            else
+              s = 1.0_MK
+            end if
+          else
+            s = 0.0_MK
+          end if
         case default
           call commErrorExcept(FAIL2CHECK, 'Unrecognized wavelet type <' &
             & // trim(adjustl(wType)) // '>.')
