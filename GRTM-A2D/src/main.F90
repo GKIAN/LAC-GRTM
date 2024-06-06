@@ -25,8 +25,12 @@ program main
   call grtcInitialize()
   call dwimInitialize()
 
+  write(*, '(A)') 'Output waveform file prefix is: ' // trim(adjustl(outPref))
   UxyzFile = trim(adjustl(outPref)) // '.gu'
   TxyzFile = trim(adjustl(outPref)) // '.gt'
+
+  !$ if(ompNthd <= 0) ompNthd = omp_get_num_procs()
+  !$ call omp_set_num_threads(ompNthd)
 
   call dwimRun()
 
@@ -41,7 +45,7 @@ program main
   close(fileID)
 
   open(newunit = fileID, file = TxyzFile)
-    write(fileID, '(12X, A, 21X, A)' ) 't (s)', 'Tzz (Pa)'
+    write(fileID, '(12X, A, 21X, A)') 't (s)', 'Tzz (Pa)'
     do i = 1, ntRec
       write(fileID, '(2(2X, ES25.17E3))') t(i), tzz(i)
     end do

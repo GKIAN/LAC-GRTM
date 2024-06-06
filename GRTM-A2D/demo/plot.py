@@ -12,13 +12,13 @@ import sys
 if len(sys.argv) > 1:
   dfile = sys.argv[1]
 else:
-  dfile = 'out.gu'
+  dfile = 'out-model.gu'
 
 dat = np.loadtxt(dfile, skiprows = 1)
 t = dat[:, 0]
 v = dat[:, 1:]
 
-fig, axs = plt.subplots(v.shape[1], 1)
+fig, axs = plt.subplots(v.shape[1], 1, sharex = True)
 if dfile[-1] == 'u':
   yls = ['x', 'z']
   for i in range(2):

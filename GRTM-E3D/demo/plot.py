@@ -19,13 +19,13 @@ else:
 if len(sys.argv) > 1:
   dfile = sys.argv[1]
 else:
-  dfile = 'out.gu'
+  dfile = 'out-model.gu'
 
 dat = np.loadtxt(dfile, skiprows = 1)
 t = dat[:, 0]
 v = dat[:, 1:]
 
-fig, axs = plt.subplots(3, 1)
+fig, axs = plt.subplots(3, 1, sharex = True)
 if dfile[-1] == 'u':
   for i in range(3):
     axs[i].plot(t, v[:, i])

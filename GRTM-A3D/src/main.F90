@@ -25,8 +25,12 @@ program main
   call grtcInitialize()
   call dwimInitialize()
 
+  write(*, '(A)') 'Output waveform file prefix is: ' // trim(adjustl(outPref))
   UxyzFile = trim(adjustl(outPref)) // '.gu'
   TxyzFile = trim(adjustl(outPref)) // '.gt'
+
+  !$ if(ompNthd <= 0) ompNthd = omp_get_num_procs()
+  !$ call omp_set_num_threads(ompNthd)
 
   call dwimRun()
 

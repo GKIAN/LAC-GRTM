@@ -12,7 +12,7 @@ import sys
 if len(sys.argv) > 1:
   dfile = sys.argv[1]
 else:
-  dfile = 'out.gu'
+  dfile = 'out-model.gu'
 
 dat = np.loadtxt(dfile, skiprows = 1)
 t = dat[:, 0]
@@ -24,7 +24,7 @@ if ncomp == 3:
 else:
   uyls = ['r', 'z']
 
-fig, axs = plt.subplots(ncomp, 1)
+fig, axs = plt.subplots(ncomp, 1, sharex = True)
 if dfile[-1] == 'u':
   for i in range(ncomp):
     axs[i].plot(t, v[:, i])

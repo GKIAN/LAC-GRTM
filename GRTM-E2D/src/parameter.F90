@@ -10,6 +10,7 @@ module paraMod
   implicit none
   public
 
+  integer :: ompNthd
   character(len = LLS) :: inputFile = 'input.conf', modelFile, outPref
 
   real(kind = MK) :: tRec, dtRec, faLim
@@ -56,11 +57,12 @@ module paraMod
       call get_command_argument(0, exeName)
       write(*, *)
       write(*, '(A)') 'Usage:'
-      write(*, '(A)') '  ' // trim(adjustl(exeName)) // ' [inputFile]'
-      write(*, '(A)') '               calculate seismogram for a ' &
-        & // 'single-force source.'
+      write(*, '(2X, A)') trim(adjustl(exeName)) // ' [inputFile]'
+      write(*, '(2X, A)') '             calculate 2D elastic waveform ' &
+        & // 'for a point source (force/moment) in a multi-layer half-space.'
       write(*, *)
-      write(*, '(A)') '  inputFile    the input file'
+      write(*, '(2X, A)') 'inputFile    the input configuring file. ' &
+        & // '[default: ' // trim(adjustl(inputFile)) // ']'
       write(*, *)
     end subroutine paraPrintHelp
 
@@ -68,12 +70,13 @@ module paraMod
       integer :: fileID, ioStatus, nLine
       integer :: i, iTemp
       real(kind = MK) :: adrs(3), rTemp
-      character(len = LSS) :: srcType
+      character(len = LSS) :: srcType, sTemp
 
       ! read input parameters from file
       mxyz = 0.0_MK
       open(newunit = fileID, file = inputFile, status = 'old')
-        call commGetConf(fileID, toGoon, 'model_file', 1, modelFile)
+        call commGetConf(fileID, toGoon, 'OpenMP_num_threads', 1, ompNthd)
+        call commGetConf(fileID, toRwnd, 'model_file', 1, modelFile)
         call commGetConf(fileID, toRwnd, 'output_prefix', 1, outPref)
         call commGetConf(fileID, toRwnd, 'record_time_length', 1, tRec)
         call commGetConf(fileID, toRwnd, 'record_time_step', 1, dtRec)
@@ -116,6 +119,25 @@ module paraMod
         call commGetConf(fileID, toRwnd, 'source_rise_time', 1, srTime)
       close(fileID)
       isForce = (srcType == 'force')
+      if(ompNthd < 0) then
+        call get_environment_variable('OMP_NUM_THREADS', sTemp)
+        read(sTemp, *, iostat = ioStatus) ompNthd
+      end if
+      do while(.true.)
+        i = index(outPref, '@')
+        if(i == 0) exit
+        select case(outPref(i + 1:i + 1))
+          case('M')
+            outPref = outPref(:i - 1) // trim(commStringStrip(modelFile, &
+              & .true., .true.)) // outPref(i + 2:)
+          case('C')
+            outPref = outPref(:i - 1) // trim(commStringStrip(inputFile, &
+              & .true., .true.)) // outPref(i + 2:)
+          case default
+            call commErrorExcept(FAIL2CHECK, &
+              & 'Unresolved output prefix format <' // outPref(i:i + 1) // '>')
+        end select
+      end do
 
       ! read model parameters from file
       open(newunit = fileID, file = modelFile, status = 'old')
