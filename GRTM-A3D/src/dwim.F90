@@ -25,6 +25,7 @@
 
 module dwimMod
 
+  !$ use omp_lib
   use comm
   use math
   use paraMod, only: tRec, faLim, kfCri, kLim, dt => dtRec, dkLim, sxyz, rxyz, &
@@ -40,7 +41,7 @@ module dwimMod
   real(kind = MK) :: fMax, feps, dmin
   real(kind = MK) :: r
 
-  integer :: fi1, fi2
+  integer :: fiEx = -1
   real(kind = MK), allocatable :: wabs(:)
 
   integer, parameter :: nIntg = 3, npt = 10
@@ -64,7 +65,7 @@ module dwimMod
     subroutine dwimInitialize()
       real(kind = MK) :: L, vMin, vMax, faMax
       complex(kind = MK) :: omg
-      integer :: m, iros, iloc(1), fiEx = - 1
+      integer :: m, iros, iloc(1), fi1, fi2
       integer :: i, j
 
       ntRec = int(tRec / dt) + 1
@@ -104,7 +105,6 @@ module dwimMod
           exit
         end if
       end do
-      if(fiEx > 0) fi2 = fiEx
 
       if(lRec < lSrc) then
         iros = min(lRec + 1, lSrc - 1)
@@ -149,19 +149,29 @@ module dwimMod
     subroutine dwimRun()
       real(kind = MK) :: k, oMax, kCri
       complex(kind = MK) :: omg, Sw
-      integer :: i, j, jj
+      integer :: i, j, jj, ni
+      logical :: isMain = .true.
 
 #ifdef FFTW
       integer(kind = 8) :: p
       include 'fftw3.f'
 #endif
 
+      ni = 0
       oMax = 2.0_MK * pi * fMax
-      !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(i, j, jj, k, omg, kCri, Sw) &
-      !$OMP   & COPYIN(suga, vpts) SCHEDULE(GUIDED, 4)
-      do i = fi1, fi2
-        write(*, '(A, I0, A, I0, A)') 'Do k-integration for frequency point ', &
-          & i, '/', fi2, ' ...'
+      !$OMP PARALLEL DEFAULT(SHARED) PRIVATE(i, j, jj, k, omg, kCri, Sw, &
+      !$OMP   & isMain) COPYIN(suga, vpts)
+      !$ isMain = (omp_get_thread_num() == 0)
+
+      !$OMP DO SCHEDULE(GUIDED, 4)
+      do i = 1, fiEx
+#ifdef PROGBAR
+        if(isMain) &
+          & call commProgressBar(ni, fiEx, 'run k-integration by frequency')
+#else
+        if(mod(i, 10) == 0) write(*, '(A, I0, A, I0, A)') &
+          & 'Run k-integration for frequency point ', i, '/', fiEx, ' ...'
+#endif
         omg = CAL_OMEGA( df * (i - 1) )
         call grtcSetMedia(omg, oMax)
         Sw = svInty * mathWavelet(omg, swType, swTime, swFreq, srTime)
@@ -216,8 +226,17 @@ module dwimMod
         iUr(i) =   uIntg(1) / (2.0_MK * pi)
         iUz(i) = - uIntg(2) / (2.0_MK * pi)
         iTz(i) = - uIntg(3) / (2.0_MK * pi)
+
+        ni = ni + 1
       end do
-      !$OMP END PARALLEL DO
+      !$OMP END DO
+
+#ifdef PROGBAR
+      if(isMain) &
+        & call commProgressBar(fiEx, fiEx, 'run k-integration by frequency')
+#endif
+
+      !$OMP END PARALLEL
 
 #ifdef FFTW
       call FFTW_(plan_dft_c2r_1d) (p, nt, iUr, u, FFTW_ESTIMATE)

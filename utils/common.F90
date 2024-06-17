@@ -4,7 +4,7 @@
 !-------------------------------------------------------------------------------
 
 module comm
-  use iso_fortran_env, only: error_unit
+  use iso_fortran_env, only: output_unit, error_unit
   implicit none
   public
 
@@ -26,6 +26,9 @@ module comm
   character(len = 5), private :: charSeparator = '=|,<>'
 
   integer, parameter :: toRwnd = - 1, toBack = 0, toGoon = 1
+
+  integer, parameter :: LenPB = 50
+  character(len = LenPB), private :: charPBar = ''
 
   interface commGetConf
     module procedure commGetConf_string
@@ -103,6 +106,34 @@ module comm
         end if
       end if
     end function commStringStrip
+
+    subroutine commProgressBar(iItr, nItr, suppInfo)
+      integer, intent(in) :: iItr, nItr
+      character(len = *), intent(in), optional :: suppInfo
+      integer :: iPBar, i
+      real(kind = MK) :: pBar
+      character(len = 13) :: strPref
+      pBar = iItr * 1.0_MK / nItr
+      iPBar = int(pBar * LenPB) + 1
+      do i = 1, iPBar - 1
+        charPBar(i:i) = '='
+      end do
+      if(iPBar < LenPB) charPBar(iPBar:iPBar) = '>'
+      write(strPref, '(A6, F6.2, A1)') 'DONE: ', pBar * 100.0_MK, '%'
+      if(present(suppInfo)) then
+        write(unit = output_unit, fmt = '(A)', advance = 'no') &
+          & char(13) // strPref // ' [' // charPBar // '] in <' &
+          & // trim(adjustl(suppInfo)) // '>'
+      else
+        write(unit = output_unit, fmt = '(A)', advance = 'no') &
+          & char(13) // strPref // ' [' // charPBar // ']'
+      end if
+      if(iPBar > LenPB) then
+        write(unit = output_unit, fmt = *)
+      else
+        flush(unit = output_unit)
+      end if
+    end subroutine commProgressBar
 
     !------------------- commGetConf -------------------------------------------
     subroutine commGetConf_string(fileID, firstDo, keyword, pivot, theValue)

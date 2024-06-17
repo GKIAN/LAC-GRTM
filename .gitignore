@@ -2,6 +2,9 @@
 */run/
 */demo/*.gu
 */demo/*.gt
+superun/*/*.gu
+superun/*/*.gt
+superun/*/*.conf
 
 # Created by https://www.toptal.com/developers/gitignore/api/fortran
 # Edit at https://www.toptal.com/developers/gitignore?templates=fortran
