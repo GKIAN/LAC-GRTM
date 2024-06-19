@@ -15,6 +15,7 @@ module paraMod
 
   real(kind = MK) :: tRec, dtRec, faLim
   real(kind = MK) :: kLim, kfCri, dkLim
+  real(kind = MK) :: waRef
 
   real(kind = MK) :: xs, zs, xr, zr
 
@@ -66,7 +67,7 @@ module paraMod
     subroutine paraInitialize()
       integer :: fileID, ioStatus, nLine
       integer :: i, iTemp
-      real(kind = MK) :: rTemp
+      real(kind = MK) :: faRef, rTemp
       character(len = LSS) :: sTemp
 
       ! read input parameters from file
@@ -82,6 +83,8 @@ module paraMod
         call commGetConf(fileID, toRwnd, 'integrate_limit_k-value', 1, kLim)
         call commGetConf(fileID, toRwnd, 'integrate_critical_k-factor', &
           & 1, kfCri)
+        call commGetConf(fileID, toRwnd, 'attenuation_reference_frequency', &
+          & 1, faRef)
         call commGetConf(fileID, toRwnd, 'coordinate_source', 1, xs)
         call commGetConf(fileID, toBack, 'coordinate_source', 2, zs)
         call commGetConf(fileID, toRwnd, 'coordinate_receiver', 1, xr)
@@ -111,6 +114,13 @@ module paraMod
               & 'Unresolved output prefix format <' // outPref(i:i + 1) // '>')
         end select
       end do
+      if(faRef < 0.0_MK) then
+        waRef = 2.0_MK * pi / (2.0_MK * dtRec)
+      else if(faRef == 0.0_MK) then
+        waRef = 2.0_MK * pi * swFreq
+      else
+        waRef = 2.0_MK * pi * faRef
+      end if
 
       ! read model parameters from file
       open(newunit = fileID, file = modelFile, status = 'old')
@@ -171,6 +181,7 @@ module paraMod
       write(*, '(A)') 'paraInitialize: modelFile = ' // trim(modelFile)
       write(*, '(A, 3(1X, G0))') 'paraInitialize: s =', xs, zs, lSrc
       write(*, '(A, 3(1X, G0))') 'paraInitialize: r =', xr, zr, lRec
+      write(*, '(A, 1X, G0)') 'paraInitialize: faRef =', waRef / (2.0_MK * pi)
 #endif
     end subroutine paraInitialize
 

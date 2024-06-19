@@ -20,7 +20,7 @@ Tche Liu @ Xiaofei Chen Research Group
 
 - Zhang H. M., Chen X. F. and Chang S. H.,(2003). An efficient Numerical Method for computing synthetic seismograms for a layered half-space with source and receivers at closed or same depths, *Pure and Applied Geophysics*, 160(3/4), 467-486.
 
-- Chen X. F., (1993). A systematic and efficient method of computing normal modes for multilayered half- space, *Geophys. J. Int.*, 115(2), 391-409.
+- Chen X. F., (1993). A systematic and efficient method of computing normal modes for multilayered half-space, *Geophys. J. Int.*, 115(2), 391-409.
 
 - Pei, D., Louie, J. N., & Pullammanappallil, S. K. (2008).  Improvements on computation of phase velocities of Rayleigh waves based  on the generalized R/T coefficient method. *Bulletin of the Seismological Society of America*, 98(1), 280-287.
 

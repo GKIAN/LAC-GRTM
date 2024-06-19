@@ -7,7 +7,7 @@ module grtcMod
 
   use comm
   use math
-  use paraMod, only: s => lSrc, j => lRec, sxyz, rxyz, nLayer, &
+  use paraMod, only: omgR => waRef, s => lSrc, j => lRec, sxyz, rxyz, nLayer, &
     & z, rho, alpha, beta, Qp, Qs
   implicit none
   private
@@ -133,14 +133,13 @@ module grtcMod
       !$OMP END PARALLEL
     end subroutine grtcInitialize
 
-    subroutine grtcSetMedia(omg, omgMax)
+    subroutine grtcSetMedia(omg)
       complex(kind = MK), intent(in) :: omg
-      real(kind = MK), intent(in) :: omgMax
 
-      !ref.: (5.88) in P.182 of (Aki and Richards, 1980)
-      gbeta  = beta  * ( 1.0_MK + log(omg / omgMax) / (pi * Qs) &
+      !ref.: (5.88/5.94) in P.182/175 of (Aki and Richards, 1980/2002)
+      gbeta  = beta  * ( 1.0_MK + log(omg / omgR) / (pi * Qs) &
         & + (0.0_MK, 1.0_MK) / (2.0_MK * Qs) )
-      galpha = alpha * ( 1.0_MK + log(omg / omgMax) / (pi * Qp) &
+      galpha = alpha * ( 1.0_MK + log(omg / omgR) / (pi * Qp) &
         & + (0.0_MK, 1.0_MK) / (2.0_MK * Qp) )
       mu = rho * gbeta * gbeta
     end subroutine grtcSetMedia

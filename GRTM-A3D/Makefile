@@ -58,9 +58,11 @@ ifdef DEBUG
   CLFS += -O0
   CFLAGS += -g
   ifeq ($(FCEXE), gfortran)
-	CLFS += -Wall -fcheck=all #-ffpe-trap=invalid,zero,overflow
+	CLFS += -Wall -Wno-unused-variable \
+      -fcheck=all #-ffpe-trap=invalid,zero,overflow
   else ifeq ($(FCEXE), ifort)
-	CLFS += -warn all -check all #-fpe:0
+	CLFS += -warn all -warn nounused \
+      -check all #-fpe:0
   endif
 else
   CLFS += -O2
@@ -75,6 +77,7 @@ ifdef FFTW
   endif
 endif
 
+CLFS := $(strip $(CLFS))
 CFLAGS := $(strip $(CFLAGS))
 LFLAGS := $(strip $(LFLAGS))
 

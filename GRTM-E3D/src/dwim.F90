@@ -189,7 +189,7 @@ module dwimMod
     end subroutine dwimInitialize
 
     subroutine dwimRun()
-      real(kind = MK) :: k, oMax, kCri
+      real(kind = MK) :: k, kCri
       complex(kind = MK) :: omg, Sw2p
       integer :: i, j, jj, ni
       logical :: isMain = .true.
@@ -200,7 +200,6 @@ module dwimMod
 #endif
 
       ni = 0
-      oMax = 2.0_MK * pi * fMax
       !$OMP PARALLEL DEFAULT(SHARED) PRIVATE(i, j, jj, k, omg, kCri, Sw2p, &
       !$OMP   & isMain) COPYIN(suga, vpts)
       !$ isMain = (omp_get_thread_num() == 0)
@@ -215,7 +214,7 @@ module dwimMod
           & 'Run k-integration for frequency point ', i, '/', fiEx, ' ...'
 #endif
         omg = CAL_OMEGA( df * (i - 1) )
-        call grtcSetMedia(omg, oMax)
+        call grtcSetMedia(omg)
         Sw2p = svInty * mathWavelet(omg, swType, swTime, swFreq, srTime)
         Sw2p = Sw2p / ( 2.0_MK * pi )
         kCri = kfCri * kmax(i, omg)
