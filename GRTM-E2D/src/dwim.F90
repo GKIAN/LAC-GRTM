@@ -65,9 +65,9 @@ module dwimMod
   contains
 
     subroutine dwimInitialize()
-      real(kind = MK) :: r, L, vMin, vMax, faMax
+      real(kind = MK) :: r, L, vMin, vMax, aLim
       complex(kind = MK) :: omg
-      integer :: m, iros, iloc(1), fi1, fi2
+      integer :: m, iros, iloc(1)
       integer :: i, j
 
       ntRec = int(tRec / dt) + 1
@@ -88,22 +88,19 @@ module dwimMod
         & * sqrt(r * r + (zr - zs) ** 2) + 100.0D+3
       dk = min(dkLim, 2.0_MK * pi / L)
 
-      fi1 = 1
-      fi2 = nf
-      allocate(wabs(fi1:fi2 + 5)); wabs = 0.0_MK
-      do i = fi1, fi2 + 5
+      fiEx = nf
+      allocate(wabs(nf)); wabs = 0.0_MK
+      do i = 1, nf
         omg = CAL_OMEGA( df * (i - 1) )
         wabs(i) = abs(mathWavelet(omg, swType, swTime, swFreq, srTime))
       end do
       iloc = maxloc(wabs)
       j = iloc(1)
-      faMax = wabs(j)
-      do i = j, fi2
-        if(sum(wabs(i:i + 5)) / 6 < faLim * faMax) then
-          fiEx = i
-          exit
-        end if
+      aLim = wabs(j) * faLim
+      do i = nf, j, -1
+        if(wabs(i) >= aLim) exit
       end do
+      fiEx = min(i + 1, nf)
 
       if(lRec < lSrc) then
         iros = min(lRec + 1, lSrc - 1)
@@ -201,7 +198,7 @@ module dwimMod
           do while(.true.)
             if(abs(k) > kLim) then
               call commErrorExcept(NOFATALERR, &
-                & 'Integrate to the limit k-value. Result NOT reliable.')
+                & 'Integrate to the limited k-value. Result NOT reliable.')
               exit
             end if
 

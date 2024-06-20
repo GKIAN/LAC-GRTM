@@ -4,7 +4,7 @@ The Luco-Apsel-Chen generalized reflection/transmission coefficients method: syn
 
 ## Repository
 
-[https://github.com/GKIAN/LAC-GRTM](https://github.com/GKIAN/LAC-GRTM)
+This repository is located at [https://github.com/GKIAN/LAC-GRTM](https://github.com/GKIAN/LAC-GRTM), and it's an implementation of LAC-GRTM (Chen, 1999) optimized with the peak-trough averaging method (Zhang et al., 2003) and improved by the method of Pei et al. (2008). Moreover, LAC-GRTM could be recast to calculate normal modes for multi-layered half-space (Chen, 1993).
 
 ## License
 
