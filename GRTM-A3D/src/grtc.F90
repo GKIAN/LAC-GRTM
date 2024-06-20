@@ -8,7 +8,7 @@ module grtcMod
   use comm
   use math
   use paraMod, only: omgR => waRef, s => lSrc, j => lRec, sxyz, rxyz, nLayer, &
-    & z, rho, alpha, Qp, Qs
+    & z, rho, alpha, Qp
   implicit none
   private
 

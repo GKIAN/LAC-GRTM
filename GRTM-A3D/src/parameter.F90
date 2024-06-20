@@ -26,7 +26,7 @@ module paraMod
 
   integer :: nLayer = 0
   integer :: lRec = 0, lSrc = 0
-  real(kind = MK), allocatable :: z(:), rho(:), alpha(:), Qs(:), Qp(:)
+  real(kind = MK), allocatable :: z(:), rho(:), alpha(:), Qp(:)
 
   contains
 
@@ -145,13 +145,12 @@ module paraMod
         allocate(z(0:nLayer))
         allocate(rho  (nLayer))
         allocate(alpha(nLayer))
-        allocate(Qs(nLayer))
         allocate(Qp(nLayer))
         !=> read model parameters
         rewind(fileID)
         read(fileID, *)
         do i = 1, nLine
-          read(fileID, *) iTemp, z(i - 1), rho(i), alpha(i), Qs(i), Qp(i)
+          read(fileID, *) iTemp, z(i - 1), rho(i), alpha(i), Qp(i)
         end do
       close(fileID)
       ! insert a fictitious interface, to ensure source not in half space
@@ -160,7 +159,6 @@ module paraMod
         z(nLine) = max( rxyz(3), sxyz(3) ) * 2.0_MK - z(nLine - 1)
         rho  (nLayer) = rho  (nLine)
         alpha(nLayer) = alpha(nLine)
-        Qs(nLayer) = Qs(nLine)
         Qp(nLayer) = Qp(nLine)
       end if
       z(nLayer) = inf
@@ -193,7 +191,6 @@ module paraMod
       if(allocated(z)) deallocate(z)
       if(allocated(rho  )) deallocate(rho  )
       if(allocated(alpha)) deallocate(alpha)
-      if(allocated(Qs)) deallocate(Qs)
       if(allocated(Qp)) deallocate(Qp)
     end subroutine paraFinalize
 
