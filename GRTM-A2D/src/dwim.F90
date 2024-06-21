@@ -59,11 +59,11 @@ module dwimMod
   !$OMP THREADPRIVATE(suga, ipts, vpts, suIntg, uIntg, duIntg)
 
   complex(kind = MK), allocatable :: iUx(:), iUz(:)
-  complex(kind = MK), allocatable :: iTzz(:)
-  real(kind = MK), allocatable :: ut(:)
+  complex(kind = MK), allocatable :: iTz(:)
+  real(kind = MK), allocatable :: u(:)
   real(kind = MK), allocatable, public :: t(:)
   real(kind = MK), allocatable, public :: ux(:), uz(:)
-  real(kind = MK), allocatable, public :: tzz(:)
+  real(kind = MK), allocatable, public :: tz(:)
 
   public dwimInitialize, dwimRun, dwimFinalize
 
@@ -187,15 +187,15 @@ module dwimMod
         end do
       end if
 
-      allocate(iUx (nt)); iUx  = (0.0_MK, 0.0_MK)
-      allocate(iUz (nt)); iUz  = (0.0_MK, 0.0_MK)
-      allocate(iTzz(nt)); iTzz = (0.0_MK, 0.0_MK)
-      allocate(ut(nt)); ut = 0.0_MK
+      allocate(iUx(nt)); iUx = (0.0_MK, 0.0_MK)
+      allocate(iUz(nt)); iUz = (0.0_MK, 0.0_MK)
+      allocate(iTz(nt)); iTz = (0.0_MK, 0.0_MK)
+      allocate(u(nt)); u = 0.0_MK
 
       allocate(t(ntRec)); t = [ ( (i - 1) * dt, i = 1, ntRec ) ]
-      allocate(ux (ntRec)); ux  = 0.0_MK
-      allocate(uz (ntRec)); uz  = 0.0_MK
-      allocate(tzz(ntRec)); tzz = 0.0_MK
+      allocate(ux(ntRec)); ux = 0.0_MK
+      allocate(uz(ntRec)); uz = 0.0_MK
+      allocate(tz(ntRec)); tz = 0.0_MK
 
 #ifdef FFTW
       if(allocated(Af)) deallocate(Af)
@@ -282,9 +282,9 @@ module dwimMod
         end do
 
         ! assemble the spectra of displacements
-        iUx (i) =   uIntg(1) * (0.0_MK, 1.0_MK)
-        iUz (i) = - uIntg(2)
-        iTzz(i) = - uIntg(3)
+        iUx(i) =   uIntg(1) * (0.0_MK, 1.0_MK)
+        iUz(i) = - uIntg(2)
+        iTz(i) = - uIntg(3)
 
         ni = ni + 1
       end do
@@ -298,35 +298,35 @@ module dwimMod
       !$OMP END PARALLEL
 
 #ifdef FFTW
-      call FFTW_(execute_dft_c2r) (pcr, iUx , ut); ux  = ut(1:ntRec) * df * exp(feps * t)
-      call FFTW_(execute_dft_c2r) (pcr, iUz , ut); uz  = ut(1:ntRec) * df * exp(feps * t)
-      call FFTW_(execute_dft_c2r) (pcr, iTzz, ut); tzz = ut(1:ntRec) * df * exp(feps * t)
+      call FFTW_(execute_dft_c2r) (pcr, iUx, u); ux = u(1:ntRec) * df * exp(feps * t)
+      call FFTW_(execute_dft_c2r) (pcr, iUz, u); uz = u(1:ntRec) * df * exp(feps * t)
+      call FFTW_(execute_dft_c2r) (pcr, iTz, u); tz = u(1:ntRec) * df * exp(feps * t)
 #else
       !=> For the DFT, we have $ X_{N - m} = X_{-m} $. And specially for purely
       ! real input, the output is Hermitian-symmetric, that is, the negative-
       ! frequency terms are just the conjugates of the corresponding positive-
       ! frequency terms.
-      iUx (nt:nt/2 + 2:-1) = conjg( iUx (2:nt/2) )
-      iUz (nt:nt/2 + 2:-1) = conjg( iUz (2:nt/2) )
-      iTzz(nt:nt/2 + 2:-1) = conjg( iTzz(2:nt/2) )
-      ut = real( fft(nt, iUx , -1) ); ux  = ut(1:ntRec) * df * exp(feps * t)
-      ut = real( fft(nt, iUz , -1) ); uz  = ut(1:ntRec) * df * exp(feps * t)
-      ut = real( fft(nt, iTzz, -1) ); tzz = ut(1:ntRec) * df * exp(feps * t)
+      iUx(nt:nt/2 + 2:-1) = conjg( iUx(2:nt/2) )
+      iUz(nt:nt/2 + 2:-1) = conjg( iUz(2:nt/2) )
+      iTz(nt:nt/2 + 2:-1) = conjg( iTz(2:nt/2) )
+      u = real( fft(nt, iUx, -1) ); ux = u(1:ntRec) * df * exp(feps * t)
+      u = real( fft(nt, iUz, -1) ); uz = u(1:ntRec) * df * exp(feps * t)
+      u = real( fft(nt, iTz, -1) ); tz = u(1:ntRec) * df * exp(feps * t)
 #endif
     end subroutine dwimRun
 
     subroutine dwimFinalize()
       if(allocated(wabs)) deallocate(wabs)
 
-      if(allocated(iUx )) deallocate(iUx )
-      if(allocated(iUz )) deallocate(iUz )
-      if(allocated(iTzz)) deallocate(iTzz)
-      if(allocated(ut)) deallocate(ut)
+      if(allocated(iUx)) deallocate(iUx)
+      if(allocated(iUz)) deallocate(iUz)
+      if(allocated(iTz)) deallocate(iTz)
+      if(allocated(u)) deallocate(u)
 
       if(allocated(t)) deallocate(t)
-      if(allocated(ux )) deallocate(ux )
-      if(allocated(uz )) deallocate(uz )
-      if(allocated(tzz)) deallocate(tzz)
+      if(allocated(ux)) deallocate(ux)
+      if(allocated(uz)) deallocate(uz)
+      if(allocated(tz)) deallocate(tz)
 
 #ifdef FFTW
       call FFTW_(destroy_plan) (prc)
@@ -369,7 +369,7 @@ module dwimMod
       eikx = exp( (0.0_MK, 1.0_MK) * k * xr )
       intg(1) = UAC * eikx ! for Ux
       intg(2) = WAC * eikx ! for Uz
-      intg(3) = TAC * eikx ! for Tzz
+      intg(3) = TAC * eikx ! for Tz
     end function integrand
 
     logical function ptamGather(S, ipt, vpt) result(gotAll)

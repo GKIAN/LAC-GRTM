@@ -45,9 +45,9 @@ program main
   close(fileID)
 
   open(newunit = fileID, file = TxyzFile)
-    write(fileID, '(12X, A, 21X, A)') 't (s)', 'Tzz (Pa)'
+    write(fileID, '(12X, A, 21X, A)') 't (s)', 'P (Pa)'
     do i = 1, ntRec
-      write(fileID, '(2(2X, ES25.17E3))') t(i), tzz(i)
+      write(fileID, '(2(2X, ES25.17E3))') t(i), tz(i)
     end do
   close(fileID)
 
