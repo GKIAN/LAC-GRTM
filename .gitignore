@@ -2,6 +2,7 @@
 */run/
 */demo/*.gu
 */demo/*.gt
+*/demo/source.wlt
 superun/*/*.gu
 superun/*/*.gt
 superun/*/*.conf

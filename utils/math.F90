@@ -76,10 +76,9 @@ module math
 #endif
     end subroutine mathInitialize
 
-    complex(kind = MK) function mathWavelet(omg, wType, wTime, wFreq, rTime) &
-      & result(s)
+    complex(kind = MK) function mathWavelet(omg, wType, wTime, wFreq) result(s)
       complex(kind = MK), intent(in) :: omg
-      real(kind = MK), intent(in) :: wTime, wFreq, rTime
+      real(kind = MK), intent(in) :: wTime, wFreq
       character(len = *), intent(in) :: wType
       real(kind = MK) :: omgc, omga, omgt
       omgc = 2.0_MK * pi * wFreq
@@ -87,7 +86,7 @@ module math
         case('Ricker')
           s = (omg / omgc) ** 2
           s = s * exp( - s) / wFreq * 2.0_MK / sqrt(pi)
-          s = s * exp( - omg * (wTime + rTime) * (0.0_MK, 1.0_MK) )
+          s = s * exp( - omg * wTime * (0.0_MK, 1.0_MK) )
         case('Green')
           s = (1.0_MK, 0.0_MK)
         case('green')
@@ -138,7 +137,7 @@ module math
       if(n > 4) then
         det = 0.0_MK
         do i = 1, n
-          det = det + ( - 1) ** (i + 1) * A(1, i) &
+          det = det + (-1) ** (i + 1) * A(1, i) &
             & * rMatDet(reshape([ A(2:n, 1:i - 1), A(2:n, i + 1:n) ], &
             & [n - 1, n - 1]), n - 1)
         end do
@@ -184,7 +183,7 @@ module math
       if(n > 4) then
         det = (0.0_MK, 0.0_MK)
         do i = 1, n
-          det = det + ( - 1) ** (i + 1) * A(1, i) &
+          det = det + (-1) ** (i + 1) * A(1, i) &
             & * cMatDet(reshape([ A(2:n, 1:i - 1), A(2:n, i + 1:n) ], &
             & [n - 1, n - 1]), n - 1)
         end do
@@ -240,7 +239,7 @@ module math
           M(1:i - 1, j:3) = A(1:i - 1, j + 1:4)
           M(i:3, 1:j - 1) = A(i + 1:4, 1:j - 1)
           M(i:3, j:3) = A(i + 1:4, j + 1:4)
-          iA(j, i) = ( - 1) ** (i + j) * rMatDet33(M)
+          iA(j, i) = (-1) ** (i + j) * rMatDet33(M)
         end do
       end do
       iA = iA / rMatDet44(A)
@@ -257,7 +256,7 @@ module math
           M(1:i - 1, j:n - 1) = A(1:i - 1, j + 1:n)
           M(i:n - 1, 1:j - 1) = A(i + 1:n, 1:j - 1)
           M(i:n - 1, j:n - 1) = A(i + 1:n, j + 1:n)
-          iA(j, i) = ( - 1) ** (i + j) * rMatDet(M, n - 1)
+          iA(j, i) = (-1) ** (i + j) * rMatDet(M, n - 1)
         end do
       end do
       iA = iA / rMatDet(A, n)
@@ -298,7 +297,7 @@ module math
           M(1:i - 1, j:3) = A(1:i - 1, j + 1:4)
           M(i:3, 1:j - 1) = A(i + 1:4, 1:j - 1)
           M(i:3, j:3) = A(i + 1:4, j + 1:4)
-          iA(j, i) = ( - 1) ** (i + j) * cMatDet33(M)
+          iA(j, i) = (-1) ** (i + j) * cMatDet33(M)
         end do
       end do
       iA = iA / cMatDet44(A)
@@ -315,7 +314,7 @@ module math
           M(1:i - 1, j:n - 1) = A(1:i - 1, j + 1:n)
           M(i:n - 1, 1:j - 1) = A(i + 1:n, 1:j - 1)
           M(i:n - 1, j:n - 1) = A(i + 1:n, j + 1:n)
-          iA(j, i) = ( - 1) ** (i + j) * cMatDet(M, n - 1)
+          iA(j, i) = (-1) ** (i + j) * cMatDet(M, n - 1)
         end do
       end do
       iA = iA / cMatDet(A, n)

@@ -75,6 +75,7 @@ There are some configurable parameters for customized running in the [demo/intpu
 - `OpenMP_num_threads`: the number of threads for OpenMP paralleling. If less than zero, the calculator will set the number to the system environment variable `OMP_NUM_THREADS`; if equal to zero, the number will be set to the number of processors that are available to the current device.
 - `model_file`: the name of the model parameter file.
 - `output_prefix`: the prefix of waveform output filenames. If there are any '@M' or '@C' in this string, all of these '@M' and '@C' will be replaced by the filenames (without extension) of the model parameter file and the input configuring file, respectively. After this replacement operation, this string will be used as the prefix of waveform output filenames.
+- `check_wavelet`: whether the source wavelet is needed to be checked (T) or not (F). If yes (and `source_wavelet_type` is not `File`), the source wavelet waveform in time domain will be output in the file given by `source_wavelet_file`.
 - `transform_into_xyz` (if it exits): whether the output waveforms are transformed to the XYZ coordinate system from the RTZ coordinate system (T) or not (F). If not, the waveforms in the RTZ coordinate system will be output.
 - `record_time_length`: the time length of the output waveform record.
 - `record_time_step`: the step length of time $\Delta t$.
@@ -90,10 +91,11 @@ There are some configurable parameters for customized running in the [demo/intpu
 - `source_moment_tensor` (if it exists): the six independent tensor components (i.e., $m_{xx}, m_{yy}, m_{zz}, m_{xy}, m_{yz}, m_{xz}$ in order) of moment source. This value is effective only when `source_type` is `moment`.
 - `source_fault_angle` (if it exists): the three focal mechanism components (i.e. dip, rake and strike angles in order) of earthquake fault source. This value is effective only when `source_type` is `angle`.
 - `source_vibrate_intensity`: the intensity of source vibration. This value is the force strength $F_0$ for force source or the scalar seismic moment $M_0$ for moment source (earthquake fault source will be transfered into moment source during the waveform calculation).
-- `source_wavelet_type`: the type of source wavelet. At present, only four options (`Ricker`, `Green`, `green` and `GReen`) are acceptable for this value. These options will be further explained in the following text.
+- `source_wavelet_type`: the type of source wavelet. At present, only five options (`Ricker`, `Green`, `green`, `GReen`, and `File`) are acceptable for this value. These options will be further explained in the following text.
 - `source_wavelet_time`: the time parameter of source wavelet. This value is the time shift $t_0$ for `Ricker`-type wavelet, or its reciprocal is the truncated frequency $f_t$ for `GReen`-type wavelet. Besides, this value is invalid for other wavelet types.
 - `source_wavelet_frequency`: the frequency parameter of source wavelet. This value is the dominant frequency $f_m$ for `Ricker`-type wavelet or the declining frequency $f_d$ for `Green`-type wavelet. Besides, this value is invalid for other wavelet types.
-- `source_rise_time`: the source-raising time. At the time of this value, the source will be excited.
+- `source_wavelet_file`: the input/output file of source wavelet waveform. If `source_wavelet_type` is `File`, this file must exists and will be read to be the source wavelet; otherwise, if `check_wavelet` is `T`, this file will be filled (overwritten) with the source wavelet used by the calculator; otherwise, this value is invalid.
+- `source_wake_time`: the source-wakeup time. At the time of this value, the source will be excited.
 
 There is an example for the implementation of PTAM in the following figure. In the wavenumber range $[k_c, k_l]$, PTAM will need to seek for 10 peak and trough points to approximately evaluate the value of wavenumber integration. If no enough peak and trough points in this wavenumber range, PTAM will obtain an inaccurate waveform for the current calculation, and the calculator will report a result-not-reliable warning.
 
@@ -103,7 +105,13 @@ For `Ricker` and `GReen` source wavelet types, there is an example of time and f
 
 <img src="misc/figures/waveletRG.png" alt="source wavelet" style="zoom:50%;" />
 
-Besides, for `Green` and `green` source wavelet types, the frequency spectra are $S(\omega) = 1$ and $S(\omega) = \mathrm{i} \omega$, respectively. The two types of source wavelet could be used to calculate the Green's functions of displacement and velocity wavefields.
+For `Green` and `green` source wavelet types, the frequency spectra are $S(\omega) = 1$ and $S(\omega) = \mathrm{i} \omega$, respectively. The two types of source wavelet could be used to calculate the Green's functions of displacement and velocity wavefields.
+
+Besides, if you have a sophisticated source time function, it could be imported as the source wavelet by `File` source wavelet type with the help of the source wavelet file given by `source_wavelet_file`. The source wavelet file should be a formatted text file with a time axis, so the file format and time axis is needed to be firstly known to generate a standard source wavelet input file.
+
+> [!TIP]
+>
+> Just after running with `check_wavelet = T` and `source_wavelet_type = Ricker` in the input configuring file, the calculator will generate a source wavelet output file with perfect format and precise time axis. A standard input file of source wavelet could be simply generated by modifying this output file.
 
 ### Parameters in the model file
 

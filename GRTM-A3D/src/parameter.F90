@@ -12,7 +12,7 @@ module paraMod
 
   integer :: ompNthd
   character(len = LLS) :: inputFile = 'input.conf', modelFile, outPref
-  logical :: toxyz = .true.
+  logical :: ckwlt = .false., toxyz = .true.
 
   real(kind = MK) :: tRec, dtRec, faLim
   real(kind = MK) :: kLim, kfCri, dkLim
@@ -21,8 +21,9 @@ module paraMod
   real(kind = MK) :: sxyz(3), rxyz(3)
 
   real(kind = MK) :: svInty
-  real(kind = MK) :: swTime, swFreq, srTime
+  real(kind = MK) :: swTime, swFreq, wkTime
   character(len = LSS) :: swType
+  character(len = LLS) :: swFile
 
   integer :: nLayer = 0
   integer :: lRec = 0, lSrc = 0
@@ -76,6 +77,7 @@ module paraMod
         call commGetConf(fileID, toGoon, 'OpenMP_num_threads', 1, ompNthd)
         call commGetConf(fileID, toRwnd, 'model_file', 1, modelFile)
         call commGetConf(fileID, toRwnd, 'output_prefix', 1, outPref)
+        call commGetConf(fileID, toRwnd, 'check_wavelet', 1, ckwlt)
         call commGetConf(fileID, toRwnd, 'transform_into_xyz', 1, toxyz)
         call commGetConf(fileID, toRwnd, 'record_time_length', 1, tRec)
         call commGetConf(fileID, toRwnd, 'record_time_step', 1, dtRec)
@@ -97,7 +99,8 @@ module paraMod
         call commGetConf(fileID, toRwnd, 'source_wavelet_type', 1, swType)
         call commGetConf(fileID, toRwnd, 'source_wavelet_time', 1, swTime)
         call commGetConf(fileID, toRwnd, 'source_wavelet_frequency', 1, swFreq)
-        call commGetConf(fileID, toRwnd, 'source_rise_time', 1, srTime)
+        call commGetConf(fileID, toRwnd, 'source_wavelet_file', 1, swFile)
+        call commGetConf(fileID, toRwnd, 'source_wake_time', 1, wkTime)
       close(fileID)
       if(ompNthd < 0) then
         call get_environment_variable('OMP_NUM_THREADS', sTemp)
@@ -115,7 +118,7 @@ module paraMod
               & .true., .true.)) // outPref(i + 2:)
           case default
             call commErrorExcept(FAIL2CHECK, &
-              & 'Unresolved output prefix format <' // outPref(i:i + 1) // '>')
+              & 'Unresolved output prefix format <' // outPref(i:i + 1) // '>.')
         end select
       end do
       if(faRef < 0.0_MK) then
@@ -129,7 +132,7 @@ module paraMod
       ! read model parameters from file
       open(newunit = fileID, file = modelFile, status = 'old')
         !=> get number of lines of file
-        nLine = - 1
+        nLine = -1
         read(fileID, *, iostat = ioStatus)
         do while(ioStatus == 0)
           nLine = nLine + 1
@@ -172,8 +175,8 @@ module paraMod
 
       ! other parameters
       if(kfCri < 0.0_MK) kfCri = 1.0_MK
-      lSrc = - 1
-      lRec = - 1
+      lSrc = -1
+      lRec = -1
       do i = 1, nLayer
         if(sxyz(3) >= z(i - 1) .and. sxyz(3) < z(i)) lSrc = i
         if(rxyz(3) >= z(i - 1) .and. rxyz(3) < z(i)) lRec = i

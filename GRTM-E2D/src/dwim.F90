@@ -28,12 +28,17 @@ module dwimMod
   !$ use omp_lib
   use comm
   use math
-  use paraMod, only: tRec, faLim, kfCri, kLim, dt => dtRec, dkLim, xs, zs, &
-    & xr, zr, svInty, swType, swTime, swFreq, srTime, isForce, lSrc, lRec, z, &
-    & beta, alpha
+  use paraMod, only: ckwlt, tRec, faLim, kfCri, kLim, dt => dtRec, dkLim, &
+    & xs, zs, xr, zr, svInty, swType, swTime, swFreq, swFile, wkTime, &
+    & isForce, lSrc, lRec, z, beta, alpha
   use grtcMod
   implicit none
   private
+
+#ifdef FFTW
+      integer(kind = DP) :: prc, pcr
+      include 'fftw3.f'
+#endif
 
   integer, public :: ntRec
 
@@ -42,6 +47,8 @@ module dwimMod
   real(kind = MK) :: fMax, feps, dmin
 
   integer :: fiEx = -1
+  complex(kind = MK), allocatable :: Swf(:)
+  real(kind = MK), allocatable :: Swt(:)
   real(kind = MK), allocatable :: wabs(:)
 
   integer, parameter :: nIntg = 8, npt = 10
@@ -67,8 +74,12 @@ module dwimMod
     subroutine dwimInitialize()
       real(kind = MK) :: r, L, vMin, vMax, aLim
       complex(kind = MK) :: omg
-      integer :: m, iros, iloc(1)
-      integer :: i, j
+      integer :: m, fileID, iros, iloc(1)
+      integer :: i, j, ios
+      real(kind = MK) :: rTemp
+#ifdef FFTW
+      complex(kind = MK), allocatable :: Af(:)
+#endif
 
       ntRec = int(tRec / dt) + 1
       m = ceiling( log10( real(ntRec, kind = MK) ) / log10(2.0_MK) )
@@ -88,16 +99,71 @@ module dwimMod
         & * sqrt(r * r + (zr - zs) ** 2) + 100.0D+3
       dk = min(dkLim, 2.0_MK * pi / L)
 
-      fiEx = nf
+      allocate(Swf(nt)); Swf = (0.0_MK, 0.0_MK)
+      allocate(Swt(nt)); Swt = 0.0_MK
       allocate(wabs(nf)); wabs = 0.0_MK
-      do i = 1, nf
-        omg = CAL_OMEGA( df * (i - 1) )
-        wabs(i) = abs(mathWavelet(omg, swType, swTime, swFreq, srTime))
-      end do
+
+#ifdef FFTW
+      allocate(Af(nt)); Af = (0.0_MK, 0.0_MK)
+      call FFTW_(plan_dft_r2c_1d) (prc, nt, Swt, Swf, FFTW_ESTIMATE)
+      call FFTW_(plan_dft_c2r_1d) (pcr, nt, Swf, Swt, FFTW_ESTIMATE)
+#endif
+
+      if(trim(adjustl(swType)) /= 'File') then
+        do i = 1, nf
+          omg = CAL_OMEGA( df * (i - 1) )
+          Swf(i) = mathWavelet(omg, swType, swTime, swFreq)
+        end do
+        if(ckwlt) then
+#ifdef FFTW
+          Af = Swf
+          call FFTW_(execute_dft_c2r) (pcr, Af, Swt)
+          Swt = Swt * df
+#else
+          Swf(nt:nt/2 + 2:-1) = conjg(Swf(2:nt/2))
+          Swt = real( fft(nt, Swf, -1) )
+          Swt = Swt * df
+#endif
+          open(newunit = fileID, file = swFile, status = 'replace')
+            write(fileID, '(10X, A, 18X, A)') 'time (s)', 'amplitude'
+            do i = 1, nt
+              write(fileID, '(2(2X, ES25.17E3))') (i - 1) * dt, Swt(i)
+            end do
+          close(fileID)
+        end if
+      else
+        i = 0
+        open(newunit = fileID, file = swFile, status = 'old')
+          read(fileID, *, iostat = ios)
+          do while(ios == 0 .and. i < nt)
+            i = i + 1
+            read(fileID, *, iostat = ios) rTemp, Swt(i)
+          end do
+        close(fileID)
+        if(i /= nt) then
+          call commErrorExcept(FAIL2CHECK, 'Insufficient data length in ' &
+            & // 'the source wavelet file <' // trim(adjustl(swFile)) // '>.')
+        else
+          write(*, '(A, I0, A)') 'Read the first ', nt, ' data points from ' &
+            & // 'the source wavelet file <' // trim(adjustl(swFile)) // '>.'
+#ifdef FFTW
+          call FFTW_(execute_dft_r2c) (prc, Swt, Swf)
+          Swf = Swf * dt
+#else
+          Swf = fft(nt, cmplx(Swt, kind = MK), 1)
+          Swf = Swf * dt
+#endif
+        end if
+        do i = 1, nf
+          omg = CAL_OMEGA( df * (i - 1) )
+        end do
+      end if
+
+      fiEx = nf
+      wabs = abs(Swf(:nf))
       iloc = maxloc(wabs)
-      j = iloc(1)
-      aLim = wabs(j) * faLim
-      do i = nf, j, -1
+      aLim = wabs(iloc(1)) * faLim
+      do i = nf, iloc(1), -1
         if(wabs(i) >= aLim) exit
       end do
       fiEx = min(i + 1, nf)
@@ -143,6 +209,10 @@ module dwimMod
       allocate(txx(ntRec)); txx = 0.0_MK
       allocate(txy(ntRec)); txy = 0.0_MK
 
+#ifdef FFTW
+      if(allocated(Af)) deallocate(Af)
+#endif
+
 #ifdef DEBUG
       write(*, '(A, 2(1X, G0))') 'dwimInit: nt =', m, nt
       write(*, '(A, 2(1X, G0))') 'dwimInit: df =', fMax, df
@@ -155,11 +225,6 @@ module dwimMod
       complex(kind = MK) :: omg, Sw
       integer :: i, ii, j, jj, ni
       logical :: isMain = .true.
-
-#ifdef FFTW
-      integer(kind = 8) :: p
-      include 'fftw3.f'
-#endif
 
       ni = 0
       !$OMP PARALLEL DEFAULT(SHARED) PRIVATE(i, j, jj, k, omg, kCri, Sw, isMain)
@@ -176,7 +241,7 @@ module dwimMod
 #endif
         omg = CAL_OMEGA( df * (i - 1) )
         call grtcSetMedia(omg)
-        Sw = svInty * mathWavelet(omg, swType, swTime, swFreq, srTime)
+        Sw = svInty * Swf(i) * exp( - omg * wkTime * (0.0_MK, 1.0_MK) )
         kCri = kfCri * kmax(i, omg)
         uIntg = integrand(0.0_MK, omg, Sw) * dk
 
@@ -250,19 +315,14 @@ module dwimMod
       !$OMP END PARALLEL
 
 #ifdef FFTW
-      call FFTW_(plan_dft_c2r_1d) (p, nt, iUx, ut, FFTW_ESTIMATE)
-
-      call FFTW_(execute_dft_c2r) (p, iUx , ut); ux  = ut(1:ntRec) * df * exp(feps * t)
-      call FFTW_(execute_dft_c2r) (p, iUy , ut); uy  = ut(1:ntRec) * df * exp(feps * t)
-      call FFTW_(execute_dft_c2r) (p, iUz , ut); uz  = ut(1:ntRec) * df * exp(feps * t)
-      call FFTW_(execute_dft_c2r) (p, iTxz, ut); txz = ut(1:ntRec) * df * exp(feps * t)
-      call FFTW_(execute_dft_c2r) (p, iTyz, ut); tyz = ut(1:ntRec) * df * exp(feps * t)
-      call FFTW_(execute_dft_c2r) (p, iTzz, ut); tzz = ut(1:ntRec) * df * exp(feps * t)
-      call FFTW_(execute_dft_c2r) (p, iTxx, ut); txx = ut(1:ntRec) * df * exp(feps * t)
-      call FFTW_(execute_dft_c2r) (p, iTxy, ut); txy = ut(1:ntRec) * df * exp(feps * t)
-
-      call FFTW_(destroy_plan) (p)
-
+      call FFTW_(execute_dft_c2r) (pcr, iUx , ut); ux  = ut(1:ntRec) * df * exp(feps * t)
+      call FFTW_(execute_dft_c2r) (pcr, iUy , ut); uy  = ut(1:ntRec) * df * exp(feps * t)
+      call FFTW_(execute_dft_c2r) (pcr, iUz , ut); uz  = ut(1:ntRec) * df * exp(feps * t)
+      call FFTW_(execute_dft_c2r) (pcr, iTxz, ut); txz = ut(1:ntRec) * df * exp(feps * t)
+      call FFTW_(execute_dft_c2r) (pcr, iTyz, ut); tyz = ut(1:ntRec) * df * exp(feps * t)
+      call FFTW_(execute_dft_c2r) (pcr, iTzz, ut); tzz = ut(1:ntRec) * df * exp(feps * t)
+      call FFTW_(execute_dft_c2r) (pcr, iTxx, ut); txx = ut(1:ntRec) * df * exp(feps * t)
+      call FFTW_(execute_dft_c2r) (pcr, iTxy, ut); txy = ut(1:ntRec) * df * exp(feps * t)
 #else
       !=> For the DFT, we have $ X_{N - m} = X_{-m} $. And specially for purely
       ! real input, the output is Hermitian-symmetric, that is, the negative-
@@ -276,7 +336,6 @@ module dwimMod
       iTzz(nt:nt/2 + 2:-1) = conjg( iTzz(2:nt/2) )
       iTxx(nt:nt/2 + 2:-1) = conjg( iTxx(2:nt/2) )
       iTxy(nt:nt/2 + 2:-1) = conjg( iTxy(2:nt/2) )
-
       ut = real( fft(nt, iUx , -1) ); ux  = ut(1:ntRec) * df * exp(feps * t)
       ut = real( fft(nt, iUy , -1) ); uy  = ut(1:ntRec) * df * exp(feps * t)
       ut = real( fft(nt, iUz , -1) ); uz  = ut(1:ntRec) * df * exp(feps * t)
@@ -285,7 +344,6 @@ module dwimMod
       ut = real( fft(nt, iTzz, -1) ); tzz = ut(1:ntRec) * df * exp(feps * t)
       ut = real( fft(nt, iTxx, -1) ); txx = ut(1:ntRec) * df * exp(feps * t)
       ut = real( fft(nt, iTxy, -1) ); txy = ut(1:ntRec) * df * exp(feps * t)
-
 #endif
     end subroutine dwimRun
 
@@ -311,6 +369,11 @@ module dwimMod
       if(allocated(tzz)) deallocate(tzz)
       if(allocated(txx)) deallocate(txx)
       if(allocated(txy)) deallocate(txy)
+
+#ifdef FFTW
+      call FFTW_(destroy_plan) (prc)
+      call FFTW_(destroy_plan) (pcr)
+#endif
     end subroutine dwimFinalize
 
     real(kind = MK) function kmax(fi, omg)
@@ -410,8 +473,8 @@ module dwimMod
       integer, intent(in) :: ipt
       real(kind = MK), intent(inout) :: vpt(:)
       integer :: i, j
-      do i = ipt - 1, 1, - 1
-        do j = 1, i, 1
+      do i = ipt - 1, 1, -1
+        do j = 1, i, +1
           vpt(j) = (vpt(j) + vpt(j + 1)) / 2.0_MK
         end do
       end do

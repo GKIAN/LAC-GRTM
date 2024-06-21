@@ -13,6 +13,7 @@ module comm
 #else
   integer, parameter :: MK = 8
 #endif
+  integer, parameter :: SP = 4, DP = 8
 
   integer, parameter :: LXSS = 4, LSS = 16, LMS = 64, LLS = 256, LXLS = 1024
 
@@ -25,7 +26,7 @@ module comm
   character(len = 1), private :: charCommentor = '#'
   character(len = 5), private :: charSeparator = '=|,<>'
 
-  integer, parameter :: toRwnd = - 1, toBack = 0, toGoon = 1
+  integer, parameter :: toRwnd = -1, toBack = 0, toGoon = 1
 
   integer, parameter :: LenPB = 50
   character(len = LenPB), private :: charPBar = ''

@@ -133,7 +133,7 @@ module grtcMod
       !ref.: eqs. (3-31) and (3-33)
       gRdu(N + 1) = (0.0_MK, 0.0_MK)
       !=> for j = s, s + 1, ..., N:
-      do i = N, s, - 1
+      do i = N, s, -1
         !ref.: eqs. (3-20a), (3-20b) and (3-48)
         if(i /= s) then
           La(1, 1) = exp( - nu(i) * (z(i) - z(i - 1)) )
@@ -191,11 +191,11 @@ module grtcMod
       end if
       Mj = 1.0_MK / (1.0_MK - Ms)
       if(isUp) then
-        do i = s - 1, j, - 1
+        do i = s - 1, j, -1
           Mj = gTu(i) * Mj
         end do
       else
-        do i = s, j - 1, + 1
+        do i = s, j - 1, +1
           Mj = gTd(i) * Mj
         end do
       end if
