@@ -41,7 +41,7 @@ Usage:
 
 <img src="misc/figures/layerSketch.png" alt="layeredmodel" style="zoom:40%;" />
 
-There will be two output text files for any one of these calculators, the displacement-component and traction-component output files marked by the filename extensions `.gu` and `.gt`, respectively. In both of the two output files, the first line is the directive information for every column. Starting from the second line, the first column gives the samples of the time axis and the other columns give the waveforms of all displacement/traction components.
+There will be two output text files for any one of these calculators, the displacement-component and stress-component output files marked by the filename extensions `.gu` and `.gt`, respectively. In both of the two output files, the first line is the directive information for every column. Starting from the second line, the first column gives the samples of the time axis and the other columns give the waveforms of all displacement/stress components.
 
 ### Setting in Makefile
 
@@ -55,7 +55,7 @@ Besides, there are some available macro definitions for CPP preprocessing in the
 
 - `STATIC`: to compile statically to generate position-independent executable file; otherwise, to compile dynamically.
 - `DEBUG`: to generate debugging information and print checking parameters in the executable file; otherwise, to generate the fast-running executable file.
-- `DOUBLETYPE`: to calculate in double-precision mode during simulation; otherwise, in single-precision mode.
+- `DOUBLETYPE`: to calculate in double-precision mode during waveform simulation; otherwise, in single-precision mode.
 - `FFTW`: to invoke the FFTW library deployed on your system to implement the FFT translation; otherwise, to invoke the function `fft` in [utils/math.F90](utils/math.F90).
 - `IEEE`: to use the intrinsic module `ieee_arithmetic` for `inf` definition, which requires the compiler support; otherwise, to set manually `inf` value.
 - `PeiDHS`: to use the modified GRTC method in Pei et al. (2008); otherwise, to use the original GRTC method in Chen (1999).

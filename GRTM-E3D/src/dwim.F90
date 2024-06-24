@@ -56,7 +56,7 @@ module dwimMod
   real(kind = MK), allocatable :: Swt(:)
   real(kind = MK), allocatable :: wabs(:)
 
-  integer, parameter :: nIntg = 16, npt = 10
+  integer, parameter :: nIntg = 20, npt = 10
   logical :: suga(nIntg, 2)
   integer :: ipts(nIntg, 2)
   real(kind = MK) :: vpts(nIntg, 2, npt), suIntg(nIntg, 2, 3)
@@ -210,7 +210,7 @@ module dwimMod
         IPS1 = fxyz(1) * cos(theta) + fxyz(2) * sin(theta)
         IPS0 = fxyz(3)
       else
-        nig = 16
+        nig = 20
         RSH2  = ( mxyz(2, 2) - mxyz(1, 1) ) / 2.0_MK * sin(2.0_MK * theta) &
           & + mxyz(1, 2) * cos(2.0_MK * theta)
         RSH1  = mxyz(1, 3) * sin(theta) - mxyz(2, 3) * cos(theta)
@@ -337,13 +337,13 @@ module dwimMod
           iTz(i) = - Sw2p * ( uIntg(9) + uIntg(10) )
 
         else
-          iUr(i) =   Sw2p * ( uIntg(1 ) + uIntg(2 ) + uIntg(3 ) )
-          iUt(i) =   Sw2p * ( uIntg(4 ) + uIntg(5 ) )
-          iUz(i) = - Sw2p * ( uIntg(6 ) + uIntg(7 ) + uIntg(8 ) )
+          iUr(i) =   Sw2p * ( uIntg(1 ) + uIntg(2 ) + uIntg(3 ) + uIntg(4 ) )
+          iUt(i) =   Sw2p * ( uIntg(5 ) + uIntg(6 ) )
+          iUz(i) = - Sw2p * ( uIntg(7 ) + uIntg(8 ) + uIntg(9 ) + uIntg(10) )
 
-          iTr(i) =   Sw2p * ( uIntg(9 ) + uIntg(10) + uIntg(11) )
-          iTt(i) =   Sw2p * ( uIntg(12) + uIntg(13) )
-          iTz(i) = - Sw2p * ( uIntg(14) + uIntg(15) + uIntg(16) )
+          iTr(i) =   Sw2p * ( uIntg(11) + uIntg(12) + uIntg(13) + uIntg(14) )
+          iTt(i) =   Sw2p * ( uIntg(15) + uIntg(16) )
+          iTz(i) = - Sw2p * ( uIntg(17) + uIntg(18) + uIntg(19) + uIntg(20) )
         end if
 
         ni = ni + 1
@@ -444,7 +444,7 @@ module dwimMod
       real(kind = MK), intent(in) :: k
       complex(kind = MK), intent(in) :: omg
       complex(kind = MK) :: intg(nIntg)
-      real(kind = MK) :: kr, j0, j1, j2, dj0, dj1, dj2
+      real(kind = MK) :: kr, jn(0:3), dj(0:2)
 
       call grtcSetEigen(k, omg)
 #ifdef SH
@@ -467,47 +467,52 @@ module dwimMod
 #endif
 
       kr = k * r
-      j0 = bessel_j0(kr)
-      j1 = bessel_j1(kr)
-      j2 = bessel_jn(2, kr)
-      dj0 = - j1
-      dj1 = (j0 - j2) / 2.0_MK
+      jn(0) = bessel_j0(kr)
+      jn(1) = bessel_j1(kr)
+      jn(2) = bessel_jn(2, kr)
+      dj(0) = - jn(1)
+      dj(1) = ( jn(0) - jn(2) ) / 2.0_MK
 
       if(isForce) then
         !ref.: eqs. (4-7a, b and c)
-        intg(1 ) = IPS1 * ( gSH1    * k * j0  + (gPS1(1) - gSH1) * k * dj1 )
-        intg(2 ) = IPS0 *   gPS0(1) * k * dj0
-        intg(3 ) = ISH1 * ( gPS1(1) * k * j0  + (gSH1 - gPS1(1)) * k * dj1 )
-        intg(4 ) = IPS1 *   gPS1(2) * k * j1
-        intg(5 ) = IPS0 *   gPS0(2) * k * j0
+        intg(1 ) = IPS1 * ( gSH1    * k * jn(0)  + (gPS1(1) - gSH1) * k * dj(1) )
+        intg(2 ) = IPS0 *   gPS0(1) * k * dj(0)
+        intg(3 ) = ISH1 * ( gPS1(1) * k * jn(0)  + (gSH1 - gPS1(1)) * k * dj(1) )
+        intg(4 ) = IPS1 *   gPS1(2) * k * jn(1)
+        intg(5 ) = IPS0 *   gPS0(2) * k * jn(0)
 
-        intg(6 ) = IPS1 * ( tSH1    * k * j0  + (tPS1(1) - tSH1) * k * dj1 )
-        intg(7 ) = IPS0 *   tPS0(1) * k * dj0
-        intg(8 ) = ISH1 * ( tPS1(1) * k * j0  + (tSH1 - tPS1(1)) * k * dj1 )
-        intg(9 ) = IPS1 *   tPS1(2) * k * j1
-        intg(10) = IPS0 *   tPS0(2) * k * j0
+        intg(6 ) = IPS1 * ( tSH1    * k * jn(0)  + (tPS1(1) - tSH1) * k * dj(1) )
+        intg(7 ) = IPS0 *   tPS0(1) * k * dj(0)
+        intg(8 ) = ISH1 * ( tPS1(1) * k * jn(0)  + (tSH1 - tPS1(1)) * k * dj(1) )
+        intg(9 ) = IPS1 *   tPS1(2) * k * jn(1)
+        intg(10) = IPS0 *   tPS0(2) * k * jn(0)
 
       else
-        dj2 = ( j1 - bessel_jn(3, kr) ) / 2.0_MK
+        jn(3) = bessel_jn(3, kr)
+        dj(2) = ( jn(1) - jn(3) ) / 2.0_MK
 
         !ref.: eqs. (4-9a, b and c)
-        intg(1 ) =   RPS2  * ( qSH2    * k * j1  + (qPS2(1) - qSH2) * k * dj2 )
-        intg(2 ) = - RPS1  * ( qSH1    * k * j0  + (qPS1(1) - qSH1) * k * dj1 )
-        intg(3 ) = - RPS01 *   qPS2(1) * k * dj0 + RPS02  * qPS0(1) * k * dj0
-        intg(4 ) =   RSH2  * ( qPS2(1) * k * j1  + (qSH2 - qPS2(1)) * k * dj2 )
-        intg(5 ) =   RSH1  * ( qPS1(1) * k * j0  + (qSH1 - qPS1(1)) * k * dj1 )
-        intg(6 ) =   RPS2  *   qPS2(2) * k * j2
-        intg(7 ) = - RPS1  *   qPS1(2) * k * j1
-        intg(8 ) =   RPS02 *   qPS0(2) * k * j0  - RPS01  * qPS2(2) * k * j0
+        intg(1 ) =   RPS2  * ( qSH2    * k * jn(1)  + (qPS2(1) - qSH2) * k * dj(2) )
+        intg(2 ) = - RPS1  * ( qSH1    * k * jn(0)  + (qPS1(1) - qSH1) * k * dj(1) )
+        intg(3 ) = - RPS01 *   qPS2(1) * k * dj(0)
+        intg(4 ) =   RPS02 *   qPS0(1) * k * dj(0)
+        intg(5 ) =   RSH2  * ( qPS2(1) * k * jn(1)  + (qSH2 - qPS2(1)) * k * dj(2) )
+        intg(6 ) =   RSH1  * ( qPS1(1) * k * jn(0)  + (qSH1 - qPS1(1)) * k * dj(1) )
+        intg(7 ) =   RPS2  *   qPS2(2) * k * jn(2)
+        intg(8 ) = - RPS1  *   qPS1(2) * k * jn(1)
+        intg(9 ) =   RPS02 *   qPS0(2) * k * jn(0)
+        intg(10) = - RPS01 *   qPS2(2) * k * jn(0)
 
-        intg(9 ) =   RPS2  * ( bSH2    * k * j1  + (bPS2(1) - bSH2) * k * dj2 )
-        intg(10) = - RPS1  * ( bSH1    * k * j0  + (bPS1(1) - bSH1) * k * dj1 )
-        intg(11) = - RPS01 *   bPS2(1) * k * dj0 + RPS02  * bPS0(1) * k * dj0
-        intg(12) =   RSH2  * ( bPS2(1) * k * j1  + (bSH2 - bPS2(1)) * k * dj2 )
-        intg(13) =   RSH1  * ( bPS1(1) * k * j0  + (bSH1 - bPS1(1)) * k * dj1 )
-        intg(14) =   RPS2  *   bPS2(2) * k * j2
-        intg(15) = - RPS1  *   bPS1(2) * k * j1
-        intg(16) =   RPS02 *   bPS0(2) * k * j0  - RPS01  * bPS2(2) * k * j0
+        intg(11) =   RPS2  * ( bSH2    * k * jn(1)  + (bPS2(1) - bSH2) * k * dj(2) )
+        intg(12) = - RPS1  * ( bSH1    * k * jn(0)  + (bPS1(1) - bSH1) * k * dj(1) )
+        intg(13) = - RPS01 *   bPS2(1) * k * dj(0)
+        intg(14) =   RPS02 *   bPS0(1) * k * dj(0)
+        intg(15) =   RSH2  * ( bPS2(1) * k * jn(1)  + (bSH2 - bPS2(1)) * k * dj(2) )
+        intg(16) =   RSH1  * ( bPS1(1) * k * jn(0)  + (bSH1 - bPS1(1)) * k * dj(1) )
+        intg(17) =   RPS2  *   bPS2(2) * k * jn(2)
+        intg(18) = - RPS1  *   bPS1(2) * k * jn(1)
+        intg(19) =   RPS02 *   bPS0(2) * k * jn(0)
+        intg(20) = - RPS01 *   bPS2(2) * k * jn(0)
       end if
     end function integrand
 
