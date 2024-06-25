@@ -56,7 +56,7 @@ module dwimMod
   real(kind = MK), allocatable :: Swt(:)
   real(kind = MK), allocatable :: wabs(:)
 
-  integer, parameter :: nIntg = 20, npt = 10
+  integer, parameter :: nIntg = 30, npt = 10
   logical :: suga(nIntg, 2)
   integer :: ipts(nIntg, 2)
   real(kind = MK) :: vpts(nIntg, 2, npt), suIntg(nIntg, 2, 3)
@@ -64,11 +64,14 @@ module dwimMod
   !$OMP THREADPRIVATE(suga, ipts, vpts, suIntg, uIntg, duIntg)
 
   complex(kind = MK), allocatable :: iUr(:), iUt(:), iUz(:)
-  complex(kind = MK), allocatable :: iTr(:), iTt(:), iTz(:)
+  complex(kind = MK), allocatable :: iTrz(:), iTtz(:), iTzz(:)
+  complex(kind = MK), allocatable :: iTrr(:), iTrt(:), iTtt(:)
   real(kind = MK), allocatable :: u(:)
   real(kind = MK), allocatable, public :: t(:)
   real(kind = MK), allocatable, public :: ur(:), ut(:), ux(:), uy(:), uz(:)
-  real(kind = MK), allocatable, public :: tr(:), tt(:), tx(:), ty(:), tz(:)
+  real(kind = MK), allocatable, public :: trz(:), ttz(:), txz(:), tyz(:), tzz(:)
+  real(kind = MK), allocatable, public :: trr(:), trt(:), ttt(:), &
+    & txx(:), txy(:), tyy(:)
 
   public dwimInitialize, dwimRun, dwimTransform, dwimFinalize
 
@@ -205,12 +208,12 @@ module dwimMod
       end if
 
       if(isForce) then
-        nig = 10
+        nig = 15
         ISH1 = fxyz(2) * cos(theta) - fxyz(1) * sin(theta)
         IPS1 = fxyz(1) * cos(theta) + fxyz(2) * sin(theta)
         IPS0 = fxyz(3)
       else
-        nig = 20
+        nig = 30
         RSH2  = ( mxyz(2, 2) - mxyz(1, 1) ) / 2.0_MK * sin(2.0_MK * theta) &
           & + mxyz(1, 2) * cos(2.0_MK * theta)
         RSH1  = mxyz(1, 3) * sin(theta) - mxyz(2, 3) * cos(theta)
@@ -227,9 +230,12 @@ module dwimMod
       allocate(iUr(nt)); iUr = (0.0_MK, 0.0_MK)
       allocate(iUt(nt)); iUt = (0.0_MK, 0.0_MK)
       allocate(iUz(nt)); iUz = (0.0_MK, 0.0_MK)
-      allocate(iTr(nt)); iTr = (0.0_MK, 0.0_MK)
-      allocate(iTt(nt)); iTt = (0.0_MK, 0.0_MK)
-      allocate(iTz(nt)); iTz = (0.0_MK, 0.0_MK)
+      allocate(iTrz(nt)); iTrz = (0.0_MK, 0.0_MK)
+      allocate(iTtz(nt)); iTtz = (0.0_MK, 0.0_MK)
+      allocate(iTzz(nt)); iTzz = (0.0_MK, 0.0_MK)
+      allocate(iTrr(nt)); iTrr = (0.0_MK, 0.0_MK)
+      allocate(iTrt(nt)); iTrt = (0.0_MK, 0.0_MK)
+      allocate(iTtt(nt)); iTtt = (0.0_MK, 0.0_MK)
       allocate(u(nt)); u = 0.0_MK
 
       allocate(t(ntRec)); t = [ ( (i - 1) * dt, i = 1, ntRec ) ]
@@ -238,11 +244,17 @@ module dwimMod
       allocate(ux(ntRec)); ux = 0.0_MK
       allocate(uy(ntRec)); uy = 0.0_MK
       allocate(uz(ntRec)); uz = 0.0_MK
-      allocate(tr(ntRec)); tr = 0.0_MK
-      allocate(tt(ntRec)); tt = 0.0_MK
-      allocate(tx(ntRec)); tx = 0.0_MK
-      allocate(ty(ntRec)); ty = 0.0_MK
-      allocate(tz(ntRec)); tz = 0.0_MK
+      allocate(trz(ntRec)); trz = 0.0_MK
+      allocate(ttz(ntRec)); ttz = 0.0_MK
+      allocate(txz(ntRec)); txz = 0.0_MK
+      allocate(tyz(ntRec)); tyz = 0.0_MK
+      allocate(tzz(ntRec)); tzz = 0.0_MK
+      allocate(trr(ntRec)); trr = 0.0_MK
+      allocate(trt(ntRec)); trt = 0.0_MK
+      allocate(ttt(ntRec)); ttt = 0.0_MK
+      allocate(txx(ntRec)); txx = 0.0_MK
+      allocate(txy(ntRec)); txy = 0.0_MK
+      allocate(tyy(ntRec)); tyy = 0.0_MK
 
 #ifdef FFTW
       if(allocated(Af)) deallocate(Af)
@@ -328,22 +340,30 @@ module dwimMod
 
         ! assemble the spectra of displacements
         if(isForce) then
-          iUr(i) =   Sw2p * ( uIntg(1) + uIntg(2) )
-          iUt(i) =   Sw2p *   uIntg(3)
-          iUz(i) = - Sw2p * ( uIntg(4) + uIntg(5) )
+          iUr (i) =   Sw2p * ( uIntg(1 ) + uIntg(2 ) )
+          iUt (i) =   Sw2p *   uIntg(3 )
+          iUz (i) = - Sw2p * ( uIntg(4 ) + uIntg(5 ) )
 
-          iTr(i) =   Sw2p * ( uIntg(6) + uIntg(7) )
-          iTt(i) =   Sw2p *   uIntg(8)
-          iTz(i) = - Sw2p * ( uIntg(9) + uIntg(10) )
+          iTrz(i) =   Sw2p * ( uIntg(6 ) + uIntg(7 ) )
+          iTtz(i) =   Sw2p *   uIntg(8 )
+          iTzz(i) = - Sw2p * ( uIntg(9 ) + uIntg(10) )
+
+          iTrr(i) =   Sw2p * ( uIntg(11) + uIntg(12) ) + eta * iTzz(i)
+          iTrt(i) =   Sw2p *   uIntg(13)
+          iTtt(i) = - Sw2p * ( uIntg(14) + uIntg(15) ) + eta * iTzz(i)
 
         else
-          iUr(i) =   Sw2p * ( uIntg(1 ) + uIntg(2 ) + uIntg(3 ) + uIntg(4 ) )
-          iUt(i) =   Sw2p * ( uIntg(5 ) + uIntg(6 ) )
-          iUz(i) = - Sw2p * ( uIntg(7 ) + uIntg(8 ) + uIntg(9 ) + uIntg(10) )
+          iUr (i) =   Sw2p * ( uIntg(1 ) + uIntg(2 ) + uIntg(3 ) + uIntg(4 ) )
+          iUt (i) =   Sw2p * ( uIntg(5 ) + uIntg(6 ) )
+          iUz (i) = - Sw2p * ( uIntg(7 ) + uIntg(8 ) + uIntg(9 ) + uIntg(10) )
 
-          iTr(i) =   Sw2p * ( uIntg(11) + uIntg(12) + uIntg(13) + uIntg(14) )
-          iTt(i) =   Sw2p * ( uIntg(15) + uIntg(16) )
-          iTz(i) = - Sw2p * ( uIntg(17) + uIntg(18) + uIntg(19) + uIntg(20) )
+          iTrz(i) =   Sw2p * ( uIntg(11) + uIntg(12) + uIntg(13) + uIntg(14) )
+          iTtz(i) =   Sw2p * ( uIntg(15) + uIntg(16) )
+          iTzz(i) = - Sw2p * ( uIntg(17) + uIntg(18) + uIntg(19) + uIntg(20) )
+
+          iTrr(i) =   Sw2p * ( uIntg(21) + uIntg(22) + uIntg(23) + uIntg(24) ) + eta * iTzz(i)
+          iTrt(i) =   Sw2p * ( uIntg(25) + uIntg(26) )
+          iTtt(i) = - Sw2p * ( uIntg(27) + uIntg(28) + uIntg(29) + uIntg(30) ) + eta * iTzz(i)
         end if
 
         ni = ni + 1
@@ -358,37 +378,52 @@ module dwimMod
       !$OMP END PARALLEL
 
 #ifdef FFTW
-      call FFTW_(execute_dft_c2r) (pcr, iUr, u); ur = u(1:ntRec) * df * exp(feps * t)
-      call FFTW_(execute_dft_c2r) (pcr, iUt, u); ut = u(1:ntRec) * df * exp(feps * t)
-      call FFTW_(execute_dft_c2r) (pcr, iUz, u); uz = u(1:ntRec) * df * exp(feps * t)
-      call FFTW_(execute_dft_c2r) (pcr, iTr, u); tr = u(1:ntRec) * df * exp(feps * t)
-      call FFTW_(execute_dft_c2r) (pcr, iTt, u); tt = u(1:ntRec) * df * exp(feps * t)
-      call FFTW_(execute_dft_c2r) (pcr, iTz, u); tz = u(1:ntRec) * df * exp(feps * t)
+      call FFTW_(execute_dft_c2r) (pcr, iUr , u); ur  = u(1:ntRec) * df * exp(feps * t)
+      call FFTW_(execute_dft_c2r) (pcr, iUt , u); ut  = u(1:ntRec) * df * exp(feps * t)
+      call FFTW_(execute_dft_c2r) (pcr, iUz , u); uz  = u(1:ntRec) * df * exp(feps * t)
+      call FFTW_(execute_dft_c2r) (pcr, iTrz, u); trz = u(1:ntRec) * df * exp(feps * t)
+      call FFTW_(execute_dft_c2r) (pcr, iTtz, u); ttz = u(1:ntRec) * df * exp(feps * t)
+      call FFTW_(execute_dft_c2r) (pcr, iTzz, u); tzz = u(1:ntRec) * df * exp(feps * t)
+      call FFTW_(execute_dft_c2r) (pcr, iTrr, u); trr = u(1:ntRec) * df * exp(feps * t)
+      call FFTW_(execute_dft_c2r) (pcr, iTrt, u); trt = u(1:ntRec) * df * exp(feps * t)
+      call FFTW_(execute_dft_c2r) (pcr, iTtt, u); ttt = u(1:ntRec) * df * exp(feps * t)
 #else
       !=> For the DFT, we have $ X_{N - m} = X_{-m} $. And specially for purely
       ! real input, the output is Hermitian-symmetric, that is, the negative-
       ! frequency terms are just the conjugates of the corresponding positive-
       ! frequency terms.
-      iUr(nt:nt/2 + 2:-1) = conjg( iUr(2:nt/2) )
-      iUt(nt:nt/2 + 2:-1) = conjg( iUt(2:nt/2) )
-      iUz(nt:nt/2 + 2:-1) = conjg( iUz(2:nt/2) )
-      iTr(nt:nt/2 + 2:-1) = conjg( iTr(2:nt/2) )
-      iTt(nt:nt/2 + 2:-1) = conjg( iTt(2:nt/2) )
-      iTz(nt:nt/2 + 2:-1) = conjg( iTz(2:nt/2) )
-      u = real( fft(nt, iUr, -1) ); ur = u(1:ntRec) * df * exp(feps * t)
-      u = real( fft(nt, iUt, -1) ); ut = u(1:ntRec) * df * exp(feps * t)
-      u = real( fft(nt, iUz, -1) ); uz = u(1:ntRec) * df * exp(feps * t)
-      u = real( fft(nt, iTr, -1) ); tr = u(1:ntRec) * df * exp(feps * t)
-      u = real( fft(nt, iTt, -1) ); tt = u(1:ntRec) * df * exp(feps * t)
-      u = real( fft(nt, iTz, -1) ); tz = u(1:ntRec) * df * exp(feps * t)
+      iUr (nt:nt/2 + 2:-1) = conjg( iUr (2:nt/2) )
+      iUt (nt:nt/2 + 2:-1) = conjg( iUt (2:nt/2) )
+      iUz (nt:nt/2 + 2:-1) = conjg( iUz (2:nt/2) )
+      iTrz(nt:nt/2 + 2:-1) = conjg( iTrz(2:nt/2) )
+      iTtz(nt:nt/2 + 2:-1) = conjg( iTtz(2:nt/2) )
+      iTzz(nt:nt/2 + 2:-1) = conjg( iTzz(2:nt/2) )
+      iTrr(nt:nt/2 + 2:-1) = conjg( iTrr(2:nt/2) )
+      iTrt(nt:nt/2 + 2:-1) = conjg( iTrt(2:nt/2) )
+      iTtt(nt:nt/2 + 2:-1) = conjg( iTtt(2:nt/2) )
+      u = real( fft(nt, iUr , -1) ); ur  = u(1:ntRec) * df * exp(feps * t)
+      u = real( fft(nt, iUt , -1) ); ut  = u(1:ntRec) * df * exp(feps * t)
+      u = real( fft(nt, iUz , -1) ); uz  = u(1:ntRec) * df * exp(feps * t)
+      u = real( fft(nt, iTrz, -1) ); trz = u(1:ntRec) * df * exp(feps * t)
+      u = real( fft(nt, iTtz, -1) ); ttz = u(1:ntRec) * df * exp(feps * t)
+      u = real( fft(nt, iTzz, -1) ); tzz = u(1:ntRec) * df * exp(feps * t)
+      u = real( fft(nt, iTrr, -1) ); trr = u(1:ntRec) * df * exp(feps * t)
+      u = real( fft(nt, iTrt, -1) ); trt = u(1:ntRec) * df * exp(feps * t)
+      u = real( fft(nt, iTtt, -1) ); ttt = u(1:ntRec) * df * exp(feps * t)
 #endif
     end subroutine dwimRun
 
     subroutine dwimTransform()
-      ux = ur * cos(theta) - ut * sin(theta)
-      uy = ut * cos(theta) + ur * sin(theta)
-      tx = tr * cos(theta) - tt * sin(theta)
-      ty = tt * cos(theta) + tr * sin(theta)
+      ux  = ur  * cos(theta) - ut  * sin(theta)
+      uy  = ut  * cos(theta) + ur  * sin(theta)
+      txz = trz * cos(theta) - ttz * sin(theta)
+      tyz = ttz * cos(theta) + trz * sin(theta)
+      txx = trr * cos(theta) * cos(theta) + ttt * sin(theta) * sin(theta) &
+          & - 2.0_MK * trt * cos(theta) * sin(theta)
+      tyy = ttt * cos(theta) * cos(theta) + trr * sin(theta) * sin(theta) &
+          & + 2.0_MK * trt * cos(theta) * sin(theta)
+      txy = trt * ( cos(theta) * cos(theta) - sin(theta) * sin(theta) ) &
+          & + (trr - ttt) * cos(theta) * sin(theta)
     end subroutine dwimTransform
 
     subroutine dwimFinalize()
@@ -397,9 +432,12 @@ module dwimMod
       if(allocated(iUr)) deallocate(iUr)
       if(allocated(iUt)) deallocate(iUt)
       if(allocated(iUz)) deallocate(iUz)
-      if(allocated(iTr)) deallocate(iTr)
-      if(allocated(iTt)) deallocate(iTt)
-      if(allocated(iTz)) deallocate(iTz)
+      if(allocated(iTrz)) deallocate(iTrz)
+      if(allocated(iTtz)) deallocate(iTtz)
+      if(allocated(iTzz)) deallocate(iTzz)
+      if(allocated(iTrr)) deallocate(iTrr)
+      if(allocated(iTrt)) deallocate(iTrt)
+      if(allocated(iTtt)) deallocate(iTtt)
       if(allocated(u)) deallocate(u)
 
       if(allocated(t)) deallocate(t)
@@ -408,11 +446,17 @@ module dwimMod
       if(allocated(ux)) deallocate(ux)
       if(allocated(uy)) deallocate(uy)
       if(allocated(uz)) deallocate(uz)
-      if(allocated(tr)) deallocate(tr)
-      if(allocated(tt)) deallocate(tt)
-      if(allocated(tx)) deallocate(tx)
-      if(allocated(ty)) deallocate(ty)
-      if(allocated(tz)) deallocate(tz)
+      if(allocated(trz)) deallocate(trz)
+      if(allocated(ttz)) deallocate(ttz)
+      if(allocated(txz)) deallocate(txz)
+      if(allocated(tyz)) deallocate(tyz)
+      if(allocated(tzz)) deallocate(tzz)
+      if(allocated(trr)) deallocate(trr)
+      if(allocated(trt)) deallocate(trt)
+      if(allocated(ttt)) deallocate(ttt)
+      if(allocated(txx)) deallocate(txx)
+      if(allocated(txy)) deallocate(txy)
+      if(allocated(tyy)) deallocate(tyy)
 
 #ifdef FFTW
       call FFTW_(destroy_plan) (prc)
@@ -444,7 +488,7 @@ module dwimMod
       real(kind = MK), intent(in) :: k
       complex(kind = MK), intent(in) :: omg
       complex(kind = MK) :: intg(nIntg)
-      real(kind = MK) :: kr, jn(0:3), dj(0:2)
+      real(kind = MK) :: kr, jn(0:4), ej(0:5)
 
       call grtcSetEigen(k, omg)
 #ifdef SH
@@ -470,49 +514,79 @@ module dwimMod
       jn(0) = bessel_j0(kr)
       jn(1) = bessel_j1(kr)
       jn(2) = bessel_jn(2, kr)
-      dj(0) = - jn(1)
-      dj(1) = ( jn(0) - jn(2) ) / 2.0_MK
+      jn(3) = bessel_jn(3, kr)
+      ej(0) = - jn(1)
+      ej(1) = ( jn(0) - jn(2) ) / 2.0_MK
+      ej(2) = ( jn(1) - jn(3) ) / 2.0_MK
+      ej(3) = ( jn(1) + jn(3) ) / 2.0_MK
 
       if(isForce) then
         !ref.: eqs. (4-7a, b and c)
-        intg(1 ) = IPS1 * ( gSH1    * k * jn(0)  + (gPS1(1) - gSH1) * k * dj(1) )
-        intg(2 ) = IPS0 *   gPS0(1) * k * dj(0)
-        intg(3 ) = ISH1 * ( gPS1(1) * k * jn(0)  + (gSH1 - gPS1(1)) * k * dj(1) )
+        intg(1 ) = IPS1 * ( gSH1    * k * jn(0)  + (gPS1(1) - gSH1) * k * ej(1) )
+        intg(2 ) = IPS0 *   gPS0(1) * k * ej(0)
+        intg(3 ) = ISH1 * ( gPS1(1) * k * jn(0)  + (gSH1 - gPS1(1)) * k * ej(1) )
         intg(4 ) = IPS1 *   gPS1(2) * k * jn(1)
         intg(5 ) = IPS0 *   gPS0(2) * k * jn(0)
 
-        intg(6 ) = IPS1 * ( tSH1    * k * jn(0)  + (tPS1(1) - tSH1) * k * dj(1) )
-        intg(7 ) = IPS0 *   tPS0(1) * k * dj(0)
-        intg(8 ) = ISH1 * ( tPS1(1) * k * jn(0)  + (tSH1 - tPS1(1)) * k * dj(1) )
+        intg(6 ) = IPS1 * ( tSH1    * k * jn(0)  + (tPS1(1) - tSH1) * k * ej(1) )
+        intg(7 ) = IPS0 *   tPS0(1) * k * ej(0)
+        intg(8 ) = ISH1 * ( tPS1(1) * k * jn(0)  + (tSH1 - tPS1(1)) * k * ej(1) )
         intg(9 ) = IPS1 *   tPS1(2) * k * jn(1)
         intg(10) = IPS0 *   tPS0(2) * k * jn(0)
 
+        intg(11) = - IPS1 * k * ( gPS1(1) * k * ( muj * ej(2) + kap * jn(1) ) &
+                              & + gSH1    * k *   muj * ej(3) )
+        intg(12) =   IPS0 * k *   gPS0(1) * k * ( muj * jn(2) - kap * jn(0) )
+        intg(13) = - ISH1 * k * ( gPS1(1) * k *   muj * ej(3) &
+                              & + gSH1    * k *   muj * ej(2) )
+        intg(14) = - IPS1 * k * ( gPS1(1) * k * ( muj * ej(2) - kap * jn(1) ) &
+                              & + gSH1    * k *   muj * ej(3) )
+        intg(15) =   IPS0 * k *   gPS0(1) * k * ( muj * jn(2) + kap * jn(0) )
+
       else
-        jn(3) = bessel_jn(3, kr)
-        dj(2) = ( jn(1) - jn(3) ) / 2.0_MK
+        jn(4) = bessel_jn(4, kr)
+        ej(4) = ( jn(0) - jn(4) ) / 2.0_MK
+        ej(5) = ( jn(0) + jn(4) ) / 2.0_MK
 
         !ref.: eqs. (4-9a, b and c)
-        intg(1 ) =   RPS2  * ( qSH2    * k * jn(1)  + (qPS2(1) - qSH2) * k * dj(2) )
-        intg(2 ) = - RPS1  * ( qSH1    * k * jn(0)  + (qPS1(1) - qSH1) * k * dj(1) )
-        intg(3 ) = - RPS01 *   qPS2(1) * k * dj(0)
-        intg(4 ) =   RPS02 *   qPS0(1) * k * dj(0)
-        intg(5 ) =   RSH2  * ( qPS2(1) * k * jn(1)  + (qSH2 - qPS2(1)) * k * dj(2) )
-        intg(6 ) =   RSH1  * ( qPS1(1) * k * jn(0)  + (qSH1 - qPS1(1)) * k * dj(1) )
+        intg(1 ) =   RPS2  * ( qSH2    * k * jn(1)  + (qPS2(1) - qSH2) * k * ej(2) )
+        intg(2 ) = - RPS1  * ( qSH1    * k * jn(0)  + (qPS1(1) - qSH1) * k * ej(1) )
+        intg(3 ) =   RPS02 *   qPS0(1) * k * ej(0)
+        intg(4 ) = - RPS01 *   qPS2(1) * k * ej(0)
+        intg(5 ) =   RSH2  * ( qPS2(1) * k * jn(1)  + (qSH2 - qPS2(1)) * k * ej(2) )
+        intg(6 ) =   RSH1  * ( qPS1(1) * k * jn(0)  + (qSH1 - qPS1(1)) * k * ej(1) )
         intg(7 ) =   RPS2  *   qPS2(2) * k * jn(2)
         intg(8 ) = - RPS1  *   qPS1(2) * k * jn(1)
         intg(9 ) =   RPS02 *   qPS0(2) * k * jn(0)
         intg(10) = - RPS01 *   qPS2(2) * k * jn(0)
 
-        intg(11) =   RPS2  * ( bSH2    * k * jn(1)  + (bPS2(1) - bSH2) * k * dj(2) )
-        intg(12) = - RPS1  * ( bSH1    * k * jn(0)  + (bPS1(1) - bSH1) * k * dj(1) )
-        intg(13) = - RPS01 *   bPS2(1) * k * dj(0)
-        intg(14) =   RPS02 *   bPS0(1) * k * dj(0)
-        intg(15) =   RSH2  * ( bPS2(1) * k * jn(1)  + (bSH2 - bPS2(1)) * k * dj(2) )
-        intg(16) =   RSH1  * ( bPS1(1) * k * jn(0)  + (bSH1 - bPS1(1)) * k * dj(1) )
+        intg(11) =   RPS2  * ( bSH2    * k * jn(1)  + (bPS2(1) - bSH2) * k * ej(2) )
+        intg(12) = - RPS1  * ( bSH1    * k * jn(0)  + (bPS1(1) - bSH1) * k * ej(1) )
+        intg(13) =   RPS02 *   bPS0(1) * k * ej(0)
+        intg(14) = - RPS01 *   bPS2(1) * k * ej(0)
+        intg(15) =   RSH2  * ( bPS2(1) * k * jn(1)  + (bSH2 - bPS2(1)) * k * ej(2) )
+        intg(16) =   RSH1  * ( bPS1(1) * k * jn(0)  + (bSH1 - bPS1(1)) * k * ej(1) )
         intg(17) =   RPS2  *   bPS2(2) * k * jn(2)
         intg(18) = - RPS1  *   bPS1(2) * k * jn(1)
         intg(19) =   RPS02 *   bPS0(2) * k * jn(0)
         intg(20) = - RPS01 *   bPS2(2) * k * jn(0)
+
+        intg(21) =   RPS2  * k * ( qPS2(1) * k * ( muj * ej(5) - kap * jn(2) ) &
+                               & + qSH2    * k *   muj * ej(4) )
+        intg(22) =   RPS1  * k * ( qPS1(1) * k * ( muj * ej(2) + kap * jn(1) ) &
+                               & + qSH1    * k *   muj * ej(3) )
+        intg(23) =   RPS02 * k *   qPS0(1) * k * ( muj * jn(2) - kap * jn(0) )
+        intg(24) = - RPS01 * k *   qPS2(1) * k * ( muj * jn(2) - kap * jn(0) )
+        intg(25) =   RSH2  * k * ( qPS2(1) * k *   muj * ej(4) &
+                               & + qSH2    * k *   muj * ej(5) )
+        intg(26) = - RSH1  * k * ( qPS1(1) * k *   muj * ej(3) &
+                               & + qSH1    * k *   muj * ej(2) )
+        intg(27) =   RPS2  * k * ( qPS2(1) * k * ( muj * ej(5) + kap * jn(2) ) &
+                               & + qSH2    * k *   muj * ej(4) )
+        intg(28) =   RPS1  * k * ( qPS1(1) * k * ( muj * ej(2) - kap * jn(1) ) &
+                               & + qSH1    * k *   muj * ej(3) )
+        intg(29) =   RPS02 * k *   qPS0(1) * k * ( muj * jn(2) + kap * jn(0) )
+        intg(30) = - RPS01 * k *   qPS2(1) * k * ( muj * jn(2) + kap * jn(0) )
       end if
     end function integrand
 

@@ -11,10 +11,10 @@ import sys
 
 if 1:
   uyls = ['x', 'y', 'z']
-  tyls = ['xz', 'yz', 'zz']
+  tyls = ['xx', 'yy', 'zz', 'xy', 'xz', 'yz']
 else:
   uyls = ['r', 't', 'z']
-  tyls = ['rz', 'tz', 'zz']
+  tyls = ['rr', 'tt', 'zz', 'rt', 'rz', 'tz']
 
 if len(sys.argv) > 1:
   dfile = sys.argv[1]
@@ -25,16 +25,21 @@ dat = np.loadtxt(dfile, skiprows = 1)
 t = dat[:, 0]
 v = dat[:, 1:]
 
-fig, axs = plt.subplots(3, 1, sharex = True)
-if dfile[-1] == 'u':
-  for i in range(3):
-    axs[i].plot(t, v[:, i])
-    axs[i].set_ylabel(r'$ u_{%s} $' % (uyls[i]))
-else:
-  for i in range(3):
-    axs[i].plot(t, v[:, i])
-    axs[i].set_ylabel(r'$ \tau_{%s} $' % (tyls[i]))
+Uyls = [    r'$ u_{%s} $' % (l) for l in uyls ]
+Tyls = [ r'$ \tau_{%s} $' % (l) for l in tyls ]
 
+if dfile[-1] == 'u':
+  nv = 3
+  yls = Uyls
+else:
+  nv = 6
+  yls = Tyls
+
+fig, axs = plt.subplots(nv, 1, sharex = True)
+for i in range(nv):
+  axs[i].plot(t, v[:, i])
+  axs[i].set_ylabel(r'%s' % (yls[i]))
+  axs[i].ticklabel_format(axis = 'y', style = 'sci', scilimits = (0, 0))
 plt.show()
 
 # vim:ft=python tw=80 ts=4 sw=2 et ai

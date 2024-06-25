@@ -54,6 +54,9 @@ module grtcMod
   !$OMP THREADPRIVATE(gPS0, gPS1, qPS0, qPS1, qPS2, tPS0, tPS1, &
   !$OMP   & bPS0, bPS1, bPS2)
 
+  complex(kind = MK), public :: muj, kap, eta
+  !$OMP THREADPRIVATE(muj, kap, eta)
+
   public grtcInitialize, grtcSetMedia, grtcSetEigen, grtcFinalize
 #ifdef SH
   public grtcCoefficientSH, grtcKernelCoeffiSH, grtcKernelForceSH, &
@@ -147,6 +150,7 @@ module grtcMod
     subroutine grtcSetEigen(k, omg)
       real(kind = MK), intent(in) :: k
       complex(kind = MK), intent(in) :: omg
+      complex(kind = MK) :: lam
 
 #ifdef PeiDHS
       complex(kind = MK) :: tau(nLayer)
@@ -199,6 +203,12 @@ module grtcMod
       iE44(3:4, 4, :) =   iE44(1:2, 4, :)
 #endif
 #endif
+
+      muj = mu(j)
+      lam = rho(j) * galpha(j) * galpha(j) - 2.0_MK * mu(j)
+      kap = ( 3.0_MK * lam * muj + 2.0_MK * muj * muj ) &
+        & / ( lam + 2.0_MK * muj )
+      eta = lam / ( lam + 2.0_MK * muj )
     end subroutine grtcSetEigen
 
 #ifdef SH

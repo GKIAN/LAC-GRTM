@@ -38,11 +38,13 @@ program main
 
   if(toxyz) then
     call dwimTransform()
-    call output(UxyzFile, ux, uy, uz, ['Ux ', 'Uy ', 'Uz '])
-    call output(TxyzFile, tx, ty, tz, ['Txz', 'Tyz', 'Tzz'])
+    call outputDispla(UxyzFile, ux, uy, uz, ['Ux ', 'Uy ', 'Uz '])
+    call outputStress(TxyzFile, txx, tyy, tzz, txy, txz, tyz, &
+      & ['Txx', 'Tyy', 'Tzz', 'Txy', 'Txz', 'Tyz'])
   else
-    call output(UxyzFile, ur, ut, uz, ['Ur ', 'Ut ', 'Uz '])
-    call output(TxyzFile, tr, tt, tz, ['Trz', 'Ttz', 'Tzz'])
+    call outputDispla(UxyzFile, ur, ut, uz, ['Ur ', 'Ut ', 'Uz '])
+    call outputStress(TxyzFile, trr, ttt, tzz, trt, trz, ttz, &
+      & ['Trr', 'Ttt', 'Tzz', 'Trt', 'Trz', 'Ttz'])
   end if
 
   call dwimFinalize()
@@ -51,7 +53,7 @@ program main
 
   contains
 
-    subroutine output(fileName, ua, ub, uc, labels)
+    subroutine outputDispla(fileName, ua, ub, uc, labels)
       character(len = *), intent(in) :: fileName
       real(kind = MK), intent(in) :: ua(:), ub(:), uc(:)
       character(len = *), intent(in) :: labels(:)
@@ -63,7 +65,22 @@ program main
           write(fileID, '(4(2X, ES25.17E3))') t(i), ua(i), ub(i), uc(i)
         end do
       close(fileID)
-    end subroutine output
+    end subroutine outputDispla
+
+    subroutine outputStress(fileName, ua, ub, uc, ud, ue, uf, labels)
+      character(len = *), intent(in) :: fileName
+      real(kind = MK), intent(in) :: ua(:), ub(:), uc(:), ud(:), ue(:), uf(:)
+      character(len = *), intent(in) :: labels(:)
+      integer :: fileID, i
+
+      open(newunit = fileID, file = fileName)
+        write(fileID, '(7(13X, A, 11X))') 't  ', labels
+        do i = 1, ntRec
+          write(fileID, '(7(2X, ES25.17E3))') t(i), ua(i), ub(i), uc(i), &
+            & ud(i), ue(i), uf(i)
+        end do
+      close(fileID)
+    end subroutine outputStress
 
 end program
 
