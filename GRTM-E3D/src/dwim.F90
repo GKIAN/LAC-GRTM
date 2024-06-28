@@ -348,9 +348,9 @@ module dwimMod
           iTtz(i) =   Sw2p *   uIntg(8 )
           iTzz(i) = - Sw2p * ( uIntg(9 ) + uIntg(10) )
 
-          iTrr(i) =   Sw2p * ( uIntg(11) + uIntg(12) ) + eta * iTzz(i)
+          iTrr(i) =   Sw2p * ( uIntg(11) + uIntg(12) )
           iTrt(i) =   Sw2p *   uIntg(13)
-          iTtt(i) = - Sw2p * ( uIntg(14) + uIntg(15) ) + eta * iTzz(i)
+          iTtt(i) = - Sw2p * ( uIntg(14) + uIntg(15) )
 
         else
           iUr (i) =   Sw2p * ( uIntg(1 ) + uIntg(2 ) + uIntg(3 ) + uIntg(4 ) )
@@ -361,11 +361,15 @@ module dwimMod
           iTtz(i) =   Sw2p * ( uIntg(15) + uIntg(16) )
           iTzz(i) = - Sw2p * ( uIntg(17) + uIntg(18) + uIntg(19) + uIntg(20) )
 
-          iTrr(i) =   Sw2p * ( uIntg(21) + uIntg(22) + uIntg(23) + uIntg(24) ) + eta * iTzz(i)
+          iTrr(i) =   Sw2p * ( uIntg(21) + uIntg(22) + uIntg(23) + uIntg(24) )
           iTrt(i) =   Sw2p * ( uIntg(25) + uIntg(26) )
-          iTtt(i) = - Sw2p * ( uIntg(27) + uIntg(28) + uIntg(29) + uIntg(30) ) + eta * iTzz(i)
+          iTtt(i) = - Sw2p * ( uIntg(27) + uIntg(28) + uIntg(29) + uIntg(30) )
         end if
 
+#ifndef STRAIN
+        iTrr(i) = iTrr(i) + eta * iTzz(i)
+        iTtt(i) = iTtt(i) + eta * iTzz(i)
+#endif
         ni = ni + 1
       end do
       !$OMP END DO
@@ -488,7 +492,7 @@ module dwimMod
       real(kind = MK), intent(in) :: k
       complex(kind = MK), intent(in) :: omg
       complex(kind = MK) :: intg(nIntg)
-      real(kind = MK) :: kr, jn(0:4), ej(0:5)
+      real(kind = MK) :: kr, jn(0:4), ej(0:6)
 
       call grtcSetEigen(k, omg)
 #ifdef SH
@@ -517,76 +521,128 @@ module dwimMod
       jn(3) = bessel_jn(3, kr)
       ej(0) = - jn(1)
       ej(1) = ( jn(0) - jn(2) ) / 2.0_MK
-      ej(2) = ( jn(1) - jn(3) ) / 2.0_MK
-      ej(3) = ( jn(1) + jn(3) ) / 2.0_MK
+      ej(2) = ( jn(0) + jn(2) ) / 2.0_MK
+      ej(3) = ( jn(1) - jn(3) ) / 2.0_MK
+      ej(4) = ( jn(1) + jn(3) ) / 2.0_MK
 
       if(isForce) then
         !ref.: eqs. (4-7a, b and c)
-        intg(1 ) = IPS1 * ( gSH1    * k * jn(0)  + (gPS1(1) - gSH1) * k * ej(1) )
-        intg(2 ) = IPS0 *   gPS0(1) * k * ej(0)
-        intg(3 ) = ISH1 * ( gPS1(1) * k * jn(0)  + (gSH1 - gPS1(1)) * k * ej(1) )
-        intg(4 ) = IPS1 *   gPS1(2) * k * jn(1)
-        intg(5 ) = IPS0 *   gPS0(2) * k * jn(0)
+        intg(1 ) = IPS1 * k * ( gSH1    * jn(0)  + (gPS1(1) - gSH1) * ej(1) )
+        intg(2 ) = IPS0 * k *   gPS0(1) * ej(0)
+        intg(3 ) = ISH1 * k * ( gPS1(1) * jn(0)  + (gSH1 - gPS1(1)) * ej(1) )
+        intg(4 ) = IPS1 * k *   gPS1(2) * jn(1)
+        intg(5 ) = IPS0 * k *   gPS0(2) * jn(0)
 
-        intg(6 ) = IPS1 * ( tSH1    * k * jn(0)  + (tPS1(1) - tSH1) * k * ej(1) )
-        intg(7 ) = IPS0 *   tPS0(1) * k * ej(0)
-        intg(8 ) = ISH1 * ( tPS1(1) * k * jn(0)  + (tSH1 - tPS1(1)) * k * ej(1) )
-        intg(9 ) = IPS1 *   tPS1(2) * k * jn(1)
-        intg(10) = IPS0 *   tPS0(2) * k * jn(0)
+#ifndef STRAIN
+        intg(6 ) = IPS1 * k * ( tSH1    * jn(0)  + (tPS1(1) - tSH1) * ej(1) )
+        intg(7 ) = IPS0 * k *   tPS0(1) * ej(0)
+        intg(8 ) = ISH1 * k * ( tPS1(1) * jn(0)  + (tSH1 - tPS1(1)) * ej(1) )
+        intg(9 ) = IPS1 * k *   tPS1(2) * jn(1)
+        intg(10) = IPS0 * k *   tPS0(2) * jn(0)
 
-        intg(11) = - IPS1 * k * ( gPS1(1) * k * ( muj * ej(2) + kap * jn(1) ) &
-                              & + gSH1    * k *   muj * ej(3) )
+        intg(11) = - IPS1 * k * ( gPS1(1) * k * ( muj * ej(3) + kap * jn(1) ) &
+                              & + gSH1    * k *   muj * ej(4) )
         intg(12) =   IPS0 * k *   gPS0(1) * k * ( muj * jn(2) - kap * jn(0) )
-        intg(13) = - ISH1 * k * ( gPS1(1) * k *   muj * ej(3) &
-                              & + gSH1    * k *   muj * ej(2) )
-        intg(14) = - IPS1 * k * ( gPS1(1) * k * ( muj * ej(2) - kap * jn(1) ) &
+        intg(13) = - ISH1 * k * ( gPS1(1) * k *   muj * ej(4) &
                               & + gSH1    * k *   muj * ej(3) )
+        intg(14) = - IPS1 * k * ( gPS1(1) * k * ( muj * ej(3) - kap * jn(1) ) &
+                              & + gSH1    * k *   muj * ej(4) )
         intg(15) =   IPS0 * k *   gPS0(1) * k * ( muj * jn(2) + kap * jn(0) )
+#else
+        intg(6 ) =   IPS1 * k * ( tSH1    * ej(2) &
+                            & + ( tPS1(1) - gPS1(2) * k ) * ej(1) ) / 2.0_MK
+        intg(7 ) = - IPS0 * k * ( tPS0(1) - gPS0(1) * k ) * jn(1)   / 2.0_MK
+        intg(8 ) =   ISH1 * k * ( tSH1    * ej(1) &
+                            & + ( tPS1(1) - gPS1(2) * k ) * ej(2) ) / 2.0_MK
+        intg(9 ) =   IPS1 * k *   tPS1(2) * jn(1)
+        intg(10) =   IPS0 * k *   tPS0(2) * jn(0)
+
+        intg(11) = - IPS1 * k * ( gPS1(1) * k * jn(1) &
+                            & - ( gPS1(1) - gSH1 ) * k * ej(4) / 2.0_MK )
+        intg(12) = - IPS0 * k *   gPS0(1) * k * ej(1)
+        intg(13) = - ISH1 * k * ( gSH1    * k * jn(1) / 2.0_MK &
+                            & + ( gPS1(1) - gSH1 ) * k * ej(4) / 2.0_MK )
+        intg(14) =   IPS1 * k * ( gPS1(1) - gSH1 ) * k * ej(4) / 2.0_MK
+        intg(15) =   IPS0 * k *   gPS0(1) * k * ej(2)
+#endif
 
       else
         jn(4) = bessel_jn(4, kr)
-        ej(4) = ( jn(0) - jn(4) ) / 2.0_MK
-        ej(5) = ( jn(0) + jn(4) ) / 2.0_MK
+        ej(5) = ( jn(0) - jn(4) ) / 2.0_MK
+        ej(6) = ( jn(0) + jn(4) ) / 2.0_MK
 
         !ref.: eqs. (4-9a, b and c)
-        intg(1 ) =   RPS2  * ( qSH2    * k * jn(1)  + (qPS2(1) - qSH2) * k * ej(2) )
-        intg(2 ) = - RPS1  * ( qSH1    * k * jn(0)  + (qPS1(1) - qSH1) * k * ej(1) )
-        intg(3 ) =   RPS02 *   qPS0(1) * k * ej(0)
-        intg(4 ) = - RPS01 *   qPS2(1) * k * ej(0)
-        intg(5 ) =   RSH2  * ( qPS2(1) * k * jn(1)  + (qSH2 - qPS2(1)) * k * ej(2) )
-        intg(6 ) =   RSH1  * ( qPS1(1) * k * jn(0)  + (qSH1 - qPS1(1)) * k * ej(1) )
-        intg(7 ) =   RPS2  *   qPS2(2) * k * jn(2)
-        intg(8 ) = - RPS1  *   qPS1(2) * k * jn(1)
-        intg(9 ) =   RPS02 *   qPS0(2) * k * jn(0)
-        intg(10) = - RPS01 *   qPS2(2) * k * jn(0)
+        intg(1 ) =   RPS2  * k * ( qSH2    * jn(1)  + (qPS2(1) - qSH2) * ej(3) )
+        intg(2 ) = - RPS1  * k * ( qSH1    * jn(0)  + (qPS1(1) - qSH1) * ej(1) )
+        intg(3 ) =   RPS02 * k *   qPS0(1) * ej(0)
+        intg(4 ) = - RPS01 * k *   qPS2(1) * ej(0)
+        intg(5 ) =   RSH2  * k * ( qPS2(1) * jn(1)  + (qSH2 - qPS2(1)) * ej(3) )
+        intg(6 ) =   RSH1  * k * ( qPS1(1) * jn(0)  + (qSH1 - qPS1(1)) * ej(1) )
+        intg(7 ) =   RPS2  * k *   qPS2(2) * jn(2)
+        intg(8 ) = - RPS1  * k *   qPS1(2) * jn(1)
+        intg(9 ) =   RPS02 * k *   qPS0(2) * jn(0)
+        intg(10) = - RPS01 * k *   qPS2(2) * jn(0)
 
-        intg(11) =   RPS2  * ( bSH2    * k * jn(1)  + (bPS2(1) - bSH2) * k * ej(2) )
-        intg(12) = - RPS1  * ( bSH1    * k * jn(0)  + (bPS1(1) - bSH1) * k * ej(1) )
-        intg(13) =   RPS02 *   bPS0(1) * k * ej(0)
-        intg(14) = - RPS01 *   bPS2(1) * k * ej(0)
-        intg(15) =   RSH2  * ( bPS2(1) * k * jn(1)  + (bSH2 - bPS2(1)) * k * ej(2) )
-        intg(16) =   RSH1  * ( bPS1(1) * k * jn(0)  + (bSH1 - bPS1(1)) * k * ej(1) )
-        intg(17) =   RPS2  *   bPS2(2) * k * jn(2)
-        intg(18) = - RPS1  *   bPS1(2) * k * jn(1)
-        intg(19) =   RPS02 *   bPS0(2) * k * jn(0)
-        intg(20) = - RPS01 *   bPS2(2) * k * jn(0)
+#ifndef STRAIN
+        intg(11) =   RPS2  * k * ( bSH2    * jn(1)  + (bPS2(1) - bSH2) * ej(3) )
+        intg(12) = - RPS1  * k * ( bSH1    * jn(0)  + (bPS1(1) - bSH1) * ej(1) )
+        intg(13) =   RPS02 * k *   bPS0(1) * ej(0)
+        intg(14) = - RPS01 * k *   bPS2(1) * ej(0)
+        intg(15) =   RSH2  * k * ( bPS2(1) * jn(1)  + (bSH2 - bPS2(1)) * ej(3) )
+        intg(16) =   RSH1  * k * ( bPS1(1) * jn(0)  + (bSH1 - bPS1(1)) * ej(1) )
+        intg(17) =   RPS2  * k *   bPS2(2) * jn(2)
+        intg(18) = - RPS1  * k *   bPS1(2) * jn(1)
+        intg(19) =   RPS02 * k *   bPS0(2) * jn(0)
+        intg(20) = - RPS01 * k *   bPS2(2) * jn(0)
 
-        intg(21) =   RPS2  * k * ( qPS2(1) * k * ( muj * ej(5) - kap * jn(2) ) &
-                               & + qSH2    * k *   muj * ej(4) )
-        intg(22) =   RPS1  * k * ( qPS1(1) * k * ( muj * ej(2) + kap * jn(1) ) &
-                               & + qSH1    * k *   muj * ej(3) )
+        intg(21) =   RPS2  * k * ( qPS2(1) * k * ( muj * ej(6) - kap * jn(2) ) &
+                               & + qSH2    * k *   muj * ej(5) )
+        intg(22) =   RPS1  * k * ( qPS1(1) * k * ( muj * ej(3) + kap * jn(1) ) &
+                               & + qSH1    * k *   muj * ej(4) )
         intg(23) =   RPS02 * k *   qPS0(1) * k * ( muj * jn(2) - kap * jn(0) )
         intg(24) = - RPS01 * k *   qPS2(1) * k * ( muj * jn(2) - kap * jn(0) )
-        intg(25) =   RSH2  * k * ( qPS2(1) * k *   muj * ej(4) &
-                               & + qSH2    * k *   muj * ej(5) )
-        intg(26) = - RSH1  * k * ( qPS1(1) * k *   muj * ej(3) &
-                               & + qSH1    * k *   muj * ej(2) )
-        intg(27) =   RPS2  * k * ( qPS2(1) * k * ( muj * ej(5) + kap * jn(2) ) &
-                               & + qSH2    * k *   muj * ej(4) )
-        intg(28) =   RPS1  * k * ( qPS1(1) * k * ( muj * ej(2) - kap * jn(1) ) &
+        intg(25) =   RSH2  * k * ( qPS2(1) * k *   muj * ej(5) &
+                               & + qSH2    * k *   muj * ej(6) )
+        intg(26) = - RSH1  * k * ( qPS1(1) * k *   muj * ej(4) &
                                & + qSH1    * k *   muj * ej(3) )
+        intg(27) =   RPS2  * k * ( qPS2(1) * k * ( muj * ej(6) + kap * jn(2) ) &
+                               & + qSH2    * k *   muj * ej(5) )
+        intg(28) =   RPS1  * k * ( qPS1(1) * k * ( muj * ej(3) - kap * jn(1) ) &
+                               & + qSH1    * k *   muj * ej(4) )
         intg(29) =   RPS02 * k *   qPS0(1) * k * ( muj * jn(2) + kap * jn(0) )
         intg(30) = - RPS01 * k *   qPS2(1) * k * ( muj * jn(2) + kap * jn(0) )
+#else
+        intg(11) =   RPS2  * k * ( bSH2    * ej(4) &
+                             & + ( bPS2(1) - qPS2(2) * k ) * ej(3) ) / 2.0_MK
+        intg(12) = - RPS1  * k * ( bSH1    * ej(2) &
+                             & + ( bPS1(1) - qPS1(2) * k ) * ej(1) ) / 2.0_MK
+        intg(13) = - RPS02 * k * ( bPS0(1) - qPS0(2) * k ) * jn(1) / 2.0_MK
+        intg(14) =   RPS01 * k * ( bPS2(1) - qPS2(2) * k ) * jn(1) / 2.0_MK
+        intg(15) =   RSH2  * k * ( bSH2    * ej(3) &
+                             & + ( bPS2(1) - qPS2(2) * k ) * ej(4) ) / 2.0_MK
+        intg(16) =   RSH1  * k * ( bSH1    * ej(1) &
+                             & + ( bPS1(1) - qPS1(2) * k ) * ej(2) ) / 2.0_MK
+        intg(17) =   RPS2  * k *   bPS2(2) * jn(2)
+        intg(18) = - RPS1  * k *   bPS1(2) * jn(1)
+        intg(19) =   RPS02 * k *   bPS0(2) * jn(0)
+        intg(20) = - RPS01 * k *   bPS2(2) * jn(0)
+
+        intg(21) =   RPS2  * k * ( qPS2(1) * k * ej(1) &
+                             & - ( qPS2(1) - qSH2 ) * k * ej(5) / 2.0_MK )
+        intg(22) =   RPS1  * k * ( qPS1(1) * k * jn(1) &
+                             & - ( qPS1(1) - qSH1 ) * k * ej(4) / 2.0_MK )
+        intg(23) = - RPS02 * k *   qPS0(1) * k * ej(1)
+        intg(24) =   RPS01 * k *   qPS2(1) * k * ej(1)
+        intg(25) =   RSH2  * k * ( qPS2(1) * k * jn(0) &
+                             & - ( qPS2(1) - qSH2 ) * k * ej(6) ) / 2.0_MK
+        intg(26) = - RSH1  * k * ( qSH1    * k * jn(1) &
+                             & + ( qPS1(1) - qSH1 ) * k * ej(4) ) / 2.0_MK
+        intg(27) =   RPS2  * k * ( qPS2(1) * k * ej(2) &
+                             & - ( qPS2(1) - qSH2 ) * k * ej(5) / 2.0_MK )
+        intg(28) = - RPS1  * k * ( qPS1(1) - qSH1 ) * k * ej(4) / 2.0_MK
+        intg(29) =   RPS02 * k *   qPS0(1) * k * ej(2)
+        intg(30) = - RPS01 * k *   qPS2(1) * k * ej(2)
+#endif
       end if
     end function integrand
 

@@ -14,6 +14,7 @@ program main
   implicit none
 
   character(len = LLS) :: UxyzFile, TxyzFile
+  character(len = 3) :: StrLab(6)
   !$ real(kind = MK) :: tbeg, tend
 
   call paraGetArguments()
@@ -37,14 +38,22 @@ program main
   !$ write(*, '(A, F10.6, A)') 'OpenMP elapsed time is ', tend - tbeg, ' s.'
 
   if(toxyz) then
+#ifndef STRAIN
+      StrLab = ['Txx', 'Tyy', 'Tzz', 'Txy', 'Txz', 'Tyz']
+#else
+      StrLab = ['Exx', 'Eyy', 'Ezz', 'Exy', 'Exz', 'Eyz']
+#endif
     call dwimTransform()
     call outputDispla(UxyzFile, ux, uy, uz, ['Ux ', 'Uy ', 'Uz '])
-    call outputStress(TxyzFile, txx, tyy, tzz, txy, txz, tyz, &
-      & ['Txx', 'Tyy', 'Tzz', 'Txy', 'Txz', 'Tyz'])
+    call outputStress(TxyzFile, txx, tyy, tzz, txy, txz, tyz, StrLab)
   else
+#ifndef STRAIN
+    StrLab = ['Trr', 'Ttt', 'Tzz', 'Trt', 'Trz', 'Ttz']
+#else
+    StrLab = ['Err', 'Ett', 'Ezz', 'Ert', 'Erz', 'Etz']
+#endif
     call outputDispla(UxyzFile, ur, ut, uz, ['Ur ', 'Ut ', 'Uz '])
-    call outputStress(TxyzFile, trr, ttt, tzz, trt, trz, ttz, &
-      & ['Trr', 'Ttt', 'Tzz', 'Trt', 'Trz', 'Ttz'])
+    call outputStress(TxyzFile, trr, ttt, tzz, trt, trz, ttz, StrLab)
   end if
 
   call dwimFinalize()

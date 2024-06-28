@@ -9,7 +9,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
-if 1:
+toxyz = True
+strain = False
+
+if toxyz:
   uyls = ['x', 'y', 'z']
   tyls = ['xx', 'yy', 'zz', 'xy', 'xz', 'yz']
 else:
@@ -26,7 +29,10 @@ t = dat[:, 0]
 v = dat[:, 1:]
 
 Uyls = [    r'$ u_{%s} $' % (l) for l in uyls ]
-Tyls = [ r'$ \tau_{%s} $' % (l) for l in tyls ]
+if not strain:
+  Tyls = [ r'$ \tau_{%s} $' % (l) for l in tyls ]
+else:
+  Tyls = [ r'$ \varepsilon_{%s} $' % (l) for l in tyls ]
 
 if dfile[-1] == 'u':
   nv = 3

@@ -59,8 +59,9 @@ Besides, there are some available macro definitions for CPP preprocessing in the
 - `FFTW`: to invoke the FFTW library deployed on your system to implement the FFT translation; otherwise, to invoke the function `fft` in [utils/math.F90](utils/math.F90).
 - `IEEE`: to use the intrinsic module `ieee_arithmetic` for `inf` definition, which requires the compiler support; otherwise, to set manually `inf` value.
 - `PeiDHS`: to use the modified GRTC method in Pei et al. (2008); otherwise, to use the original GRTC method in Chen (1999).
-- `SH` (if it exits): to calculate SH wave propagation; otherwise, SH wave won't be considered.
-- `PS` (if it exits): to calculate P-SV wave propagation; otherwise, P-SV wave won't be considered.
+- `SH` (if it exists): to calculate SH wave propagation; otherwise, SH wave won't be considered.
+- `PS` (if it exists): to calculate P-SV wave propagation; otherwise, P-SV wave won't be considered.
+- `STRAIN` (if it exists): to calculate strain-component waveforms; otherwise, stress-component waveforms will be calculated.
 - `COLORPRINT`: to enable to print messages in color version (only for the terminal supporting colorful printing); otherwise, not in color version.
 - `PROGBAR`: to show the calculating progress by the progress bar; otherwise, by the trivial printed text.
 
@@ -76,7 +77,7 @@ There are some configurable parameters for customized running in the [demo/intpu
 - `model_file`: the name of the model parameter file.
 - `output_prefix`: the prefix of waveform output filenames. If there are any '@M' or '@C' in this string, all of these '@M' and '@C' will be replaced by the filenames (without extension) of the model parameter file and the input configuring file, respectively. After this replacement operation, this string will be used as the prefix of waveform output filenames.
 - `check_wavelet`: whether the source wavelet is needed to be checked (T) or not (F). If yes (and `source_wavelet_type` is not `File`), the source wavelet waveform in time domain will be output in the file given by `source_wavelet_file`.
-- `transform_into_xyz` (if it exits): whether the output waveforms are transformed to the XYZ coordinate system from the RTZ coordinate system (T) or not (F). If not, the waveforms in the RTZ coordinate system will be output.
+- `transform_into_xyz` (if it exists): whether the output waveforms are transformed to the XYZ coordinate system from the RTZ coordinate system (T) or not (F). If not, the waveforms in the RTZ coordinate system will be output.
 - `record_time_length`: the time length of the output waveform record.
 - `record_time_step`: the step length of time $\Delta t$.
 - `frequency_limit_amplitude_ratio`: the ratio of spectrum amplitude decay $a_f$ for limiting the highest desirable frequency $f_c$. The frequency $f_c$ will be determined as the maximum frequency at which the spectrum amplitude of source wavelet is not less than its maximum amplitude scaled by this value. Any frequencies larger than $f_c$ will not be considered during the waveform calculation. This value almost has no need to be changed; reduce it only if the high accuracy is necessary.

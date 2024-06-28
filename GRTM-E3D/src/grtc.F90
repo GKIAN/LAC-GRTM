@@ -54,8 +54,10 @@ module grtcMod
   !$OMP THREADPRIVATE(gPS0, gPS1, qPS0, qPS1, qPS2, tPS0, tPS1, &
   !$OMP   & bPS0, bPS1, bPS2)
 
+#ifndef STRAIN
   complex(kind = MK), public :: muj, kap, eta
   !$OMP THREADPRIVATE(muj, kap, eta)
+#endif
 
   public grtcInitialize, grtcSetMedia, grtcSetEigen, grtcFinalize
 #ifdef SH
@@ -204,11 +206,13 @@ module grtcMod
 #endif
 #endif
 
+#ifndef STRAIN
       muj = mu(j)
       lam = rho(j) * galpha(j) * galpha(j) - 2.0_MK * mu(j)
       kap = ( 3.0_MK * lam * muj + 2.0_MK * muj * muj ) &
         & / ( lam + 2.0_MK * muj )
       eta = lam / ( lam + 2.0_MK * muj )
+#endif
     end subroutine grtcSetEigen
 
 #ifdef SH
@@ -290,6 +294,9 @@ module grtcMod
     subroutine grtcKernelCoeffiSH()
       complex(kind = MK) :: Ldj, Luj
       complex(kind = MK) :: Mj, Ms
+#ifdef STRAIN
+      complex(kind = MK) :: ZLd, ZLu
+#endif
       integer :: i
 
       !ref.: eqs. (3-47b) and (3-47a)
@@ -306,15 +313,27 @@ module grtcMod
       else
         Ldj = exp( - nu(j) * (zr - z(j - 1)) )
       end if
+#ifdef STRAIN
+      ZLu =   nu(j) * Luj
+      zLd = - nu(j) * Ldj
+#endif
 
       !ref.: eqs. (3-52a) - (3-52d)
       if(isUp) then
         YSH = E22(1, 1, j) * Ldj * gRud(j - 1) + E22(1, 2, j) * Luj
+#ifdef STRAIN
+        ZSH = E22(1, 1, j) * ZLd * gRud(j - 1) + E22(1, 2, j) * ZLu
+#else
         ZSH = E22(2, 1, j) * Ldj * gRud(j - 1) + E22(2, 2, j) * Luj
+#endif
         Ms = Eus * gRdu(s) * Eds * gRud(s - 1)
       else
         YSH = E22(1, 1, j) * Ldj + E22(1, 2, j) * Luj * gRdu(j)
+#ifdef STRAIN
+        ZSH = E22(1, 1, j) * ZLd + E22(1, 2, j) * ZLu * gRdu(j)
+#else
         ZSH = E22(2, 1, j) * Ldj + E22(2, 2, j) * Luj * gRdu(j)
+#endif
         Ms = Eds * gRud(s - 1) * Eus * gRdu(s)
       end if
       Mj = 1.0_MK / (1.0_MK - Ms)
@@ -472,6 +491,11 @@ module grtcMod
         & Luj(2, 2) = (0.0_MK, 0.0_MK)
       complex(kind = MK) :: Mj(2, 2), Ms(2, 2)
       !$OMP THREADPRIVATE(Ldj, Luj)
+#ifdef STRAIN
+      complex(kind = MK) :: ZLd(2, 2) = (0.0_MK, 0.0_MK), &
+        & ZLu(2, 2) = (0.0_MK, 0.0_MK)
+      !$OMP THREADPRIVATE(ZLd, ZLu)
+#endif
 
       integer :: i
 
@@ -495,20 +519,36 @@ module grtcMod
         Ldj(1, 1) = exp( - gam(j) * (zr - z(j - 1)) )
         Ldj(2, 2) = exp( -  nu(j) * (zr - z(j - 1)) )
       end if
+#ifdef STRAIN
+      ZLu(1, 1) =   gam(j) * Luj(1, 1)
+      ZLu(2, 2) =    nu(j) * Luj(2, 2)
+      ZLd(1, 1) = - gam(j) * Ldj(1, 1)
+      zLd(2, 2) = -  nu(j) * Ldj(2, 2)
+#endif
 
       !ref.: eqs. (3-58a) - (3-58d)
       if(isUp) then
         YPS = matmul( matmul(E44(1:2, 1:2, j), Ldj), gRud22(:, :, j - 1) ) &
           & + matmul(E44(1:2, 3:4, j), Luj)
+#ifdef STRAIN
+        ZPS = matmul( matmul(E44(1:2, 1:2, j), ZLd), gRud22(:, :, j - 1) ) &
+          & + matmul(E44(1:2, 3:4, j), ZLu)
+#else
         ZPS = matmul( matmul(E44(3:4, 1:2, j), Ldj), gRud22(:, :, j - 1) ) &
           & + matmul(E44(3:4, 3:4, j), Luj)
+#endif
         Ms = matmul( matmul( matmul( Eus22, gRdu22(:, :, s) ), &
           & Eds22 ), gRud22(:, :, s - 1) )
       else
         YPS = matmul(E44(1:2, 1:2, j), Ldj) &
           & + matmul( matmul(E44(1:2, 3:4, j), Luj), gRdu22(:, :, j) )
+#ifdef STRAIN
+        ZPS = matmul(E44(1:2, 1:2, j), ZLd) &
+          & + matmul( matmul(E44(1:2, 3:4, j), ZLu), gRdu22(:, :, j) )
+#else
         ZPS = matmul(E44(3:4, 1:2, j), Ldj) &
           & + matmul( matmul(E44(3:4, 3:4, j), Luj), gRdu22(:, :, j) )
+#endif
         Ms = matmul( matmul( matmul( Eds22, gRud22(:, :, s - 1) ), &
           & Eus22 ), gRdu22(:, :, s) )
       end if
