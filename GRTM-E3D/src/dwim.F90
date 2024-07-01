@@ -551,7 +551,7 @@ module dwimMod
 #else
         intg(6 ) =   IPS1 * k * ( tSH1    * ej(2) &
                             & + ( tPS1(1) - gPS1(2) * k ) * ej(1) ) / 2.0_MK
-        intg(7 ) = - IPS0 * k * ( tPS0(1) - gPS0(1) * k ) * jn(1)   / 2.0_MK
+        intg(7 ) = - IPS0 * k * ( tPS0(1) - gPS0(2) * k ) * jn(1)   / 2.0_MK
         intg(8 ) =   ISH1 * k * ( tSH1    * ej(1) &
                             & + ( tPS1(1) - gPS1(2) * k ) * ej(2) ) / 2.0_MK
         intg(9 ) =   IPS1 * k *   tPS1(2) * jn(1)

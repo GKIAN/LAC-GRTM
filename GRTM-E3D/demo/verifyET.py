@@ -8,7 +8,7 @@
 import numpy as np
 import matplotlib.pyplot as pl
 
-irec = 1 # layer number of the receiver layer
+lrec = 1 # layer number of the receiver layer
 fE = './out.gt'
 fT = './out-model.gt'
 mfile = 'model.dat'
@@ -19,7 +19,7 @@ else:
   yls = ['rr', 'tt', 'zz', 'rt', 'rz', 'tz']
 
 datM = np.loadtxt(mfile, skiprows = 1)
-rho, bet, alp = datM[irec - 1, 2:5]
+rho, bet, alp = datM[lrec - 1, 2:5]
 
 mu = rho * bet * bet
 la = rho * alp * alp - 2.0 * mu

@@ -315,7 +315,7 @@ module grtcMod
       end if
 #ifdef STRAIN
       ZLu =   nu(j) * Luj
-      zLd = - nu(j) * Ldj
+      ZLd = - nu(j) * Ldj
 #endif
 
       !ref.: eqs. (3-52a) - (3-52d)
@@ -523,7 +523,7 @@ module grtcMod
       ZLu(1, 1) =   gam(j) * Luj(1, 1)
       ZLu(2, 2) =    nu(j) * Luj(2, 2)
       ZLd(1, 1) = - gam(j) * Ldj(1, 1)
-      zLd(2, 2) = -  nu(j) * Ldj(2, 2)
+      ZLd(2, 2) = -  nu(j) * Ldj(2, 2)
 #endif
 
       !ref.: eqs. (3-58a) - (3-58d)
