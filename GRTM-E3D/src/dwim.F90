@@ -36,8 +36,8 @@ module dwimMod
   private
 
 #ifdef FFTW
-      integer(kind = DP) :: prc, pcr
-      include 'fftw3.f'
+  integer(kind = DP) :: prc, pcr
+  include 'fftw3.f'
 #endif
 
   integer, public :: ntRec

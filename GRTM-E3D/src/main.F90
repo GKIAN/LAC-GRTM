@@ -39,9 +39,9 @@ program main
 
   if(toxyz) then
 #ifndef STRAIN
-      StrLab = ['Txx', 'Tyy', 'Tzz', 'Txy', 'Txz', 'Tyz']
+    StrLab = ['Txx', 'Tyy', 'Tzz', 'Txy', 'Txz', 'Tyz']
 #else
-      StrLab = ['Exx', 'Eyy', 'Ezz', 'Exy', 'Exz', 'Eyz']
+    StrLab = ['Exx', 'Eyy', 'Ezz', 'Exy', 'Exz', 'Eyz']
 #endif
     call dwimTransform()
     call outputDispla(UxyzFile, ux, uy, uz, ['Ux ', 'Uy ', 'Uz '])
