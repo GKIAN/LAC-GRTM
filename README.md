@@ -14,6 +14,12 @@ This repository is located at [https://github.com/GKIAN/LAC-GRTM](https://github
 
 Tche Liu @ Xiaofei Chen Research Group
 
+## Applications
+
+- Wang W., Zhang Z., Zhang W. and Liu Q., (2023). Implementation of efficient low-storage techniques for 3-D seismic simulation using the curved grid finite-difference method, *Geophysical Journal International*, 234(3), 2214–2230, [DOI: 10.1093/gji/ggad198](https://doi.org/10.1093/gji/ggad198).
+- Cao W., Zhang W. and Wang W., (2024). Acoustic wave simulation in strongly heterogeneous models using a discontinuous Galerkin method, *Geophysics*, 89(5), T251-T262, [DOI: 10.1190/geo2023-0525.1](https://doi.org/10.1190/geo2023-0525.1).
+- Jiang L. and Zhang W., (2024). Efficient implementation of equivalent medium parameterization in finite-difference seismic wave simulation methods, *Geophysical Journal International*, 239(1), 675-693, [DOI: 10.1093/gji/ggae286](https://doi.org/10.1093/gji/ggae286).
+
 ## Usage
 
 There are four different second-level folders (SLFs) for different waveform calculating scenarios: (1) [GRTM-A2D](GRTM-A2D) for 2-D acoustic wave, (2) [GRTM-A3D](GRTM-A3D) for 3-D acoustic wave, (3) [GRTM-E2D](GRTM-E2D) for 2-D elastic wave and (4) [GRTM-E3D](GRTM-E3D) for 3-D elastic wave.
@@ -133,8 +139,4 @@ The model files for 2D and 3D acoustic/elastic waveform calculation should be fu
 - Chen X. F., (1993). A systematic and efficient method of computing normal modes for multilayered half-space, *Geophys. J. Int.*, 115(2), 391-409.
 
 - Pei, D., Louie, J. N., & Pullammanappallil, S. K. (2008). Improvements on computation of phase velocities of Rayleigh waves based on the generalized R/T coefficient method. *Bulletin of the Seismological Society of America*, 98(1), 280-287.
-
-## Applications
-
-- Wang W., Zhang Z., Zhang W. and Liu Q., (2023). Implementation of efficient low-storage techniques for 3-D seismic simulation using the curved grid finite-difference method, *Geophysical Journal International*, 234(3), 2214–2230, https://doi.org/10.1093/gji/ggad198.
 

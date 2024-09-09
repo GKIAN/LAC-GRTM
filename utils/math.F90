@@ -323,7 +323,7 @@ module math
 
     recursive function fft(N, x, fob) result(y)
       integer, intent(in) :: N, fob
-      complex(kind = MK), intent(in) :: x(0:)
+      complex(kind = MK), intent(in) :: x(0:N - 1)
       complex(kind = MK) :: y(0:N - 1)
       complex(kind = MK) :: g(N/2), h(N/2), W(N/2)
       integer :: l
