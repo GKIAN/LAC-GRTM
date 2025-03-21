@@ -19,6 +19,7 @@ Tche Liu @ Xiaofei Chen Research Group
 - Wang W., Zhang Z., Zhang W. and Liu Q., (2023). Implementation of efficient low-storage techniques for 3-D seismic simulation using the curved grid finite-difference method, *Geophysical Journal International*, 234(3), 2214–2230, [DOI: 10.1093/gji/ggad198](https://doi.org/10.1093/gji/ggad198).
 - Cao W., Zhang W. and Wang W., (2024). Acoustic wave simulation in strongly heterogeneous models using a discontinuous Galerkin method, *Geophysics*, 89(5), T251-T262, [DOI: 10.1190/geo2023-0525.1](https://doi.org/10.1190/geo2023-0525.1).
 - Jiang L. and Zhang W., (2024). Efficient implementation of equivalent medium parameterization in finite-difference seismic wave simulation methods, *Geophysical Journal International*, 239(1), 675-693, [DOI: 10.1093/gji/ggae286](https://doi.org/10.1093/gji/ggae286).
+- Sun W., Zhang W., Wang W. and Chen X., (2025). Multidomain finite-difference and Chebyshev pseudospectral hybrid method for elastic wave simulation: two-dimensional case. *Geophysical Journal International*, 240(1), 426-445, [DOI: 10.1093/gji/ggae395](https://doi.org/10.1093/gji/ggae395).
 
 ## Usage
 
