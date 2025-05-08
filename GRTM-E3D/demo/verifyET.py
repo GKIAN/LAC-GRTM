@@ -12,8 +12,9 @@ lrec = 1 # layer number of the receiver layer
 fE = './out.gt'
 fT = './out-model.gt'
 mfile = 'model.dat'
+toxyz = 1
 
-if 1:
+if toxyz:
   yls = ['xx', 'yy', 'zz', 'xy', 'xz', 'yz']
 else:
   yls = ['rr', 'tt', 'zz', 'rt', 'rz', 'tz']

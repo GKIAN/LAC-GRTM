@@ -11,6 +11,8 @@ import sys
 
 ptype = 'u'
 nfile = 7
+strain = True
+toxyz = True
 
 if len(sys.argv) > 1:
   ptype = sys.argv[1]
@@ -20,9 +22,20 @@ nt = len(t)
 
 dat = np.zeros((nfile, nt))
 if ptype == 'u':
-  vts = [ r'$U_x$', r'$U_y$', r'$U_y$' ]
+  if toxyz:
+    uyls = ['x', 'y', 'z']
+  else:
+    uyls = ['r', 't', 'z']
+  vts = [ r'$ u_{%s} $' % (l) for l in uyls ]
 elif ptype == 't':
-  vts = [ r'$T_{xz}$', r'$T_{yz}$', r'$T_{zz}$' ]
+  if toxyz:
+    tyls = ['xx', 'yy', 'zz', 'xy', 'xz', 'yz']
+  else:
+    tyls = ['rr', 'tt', 'zz', 'rt', 'rz', 'tz']
+  if strain:
+    vts = [ r'$ \tau_{%s} $' % (l) for l in tyls ]
+  else:
+    vts = [ r'$ \varepsilon_{%s} $' % (l) for l in tyls ]
 else:
   raise ValueError('Unrecongnized plot type <%s>' % (ptype))
 

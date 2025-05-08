@@ -28,7 +28,7 @@ dat = np.loadtxt(dfile, skiprows = 1)
 t = dat[:, 0]
 v = dat[:, 1:]
 
-Uyls = [    r'$ u_{%s} $' % (l) for l in uyls ]
+Uyls = [ r'$ u_{%s} $' % (l) for l in uyls ]
 if not strain:
   Tyls = [ r'$ \tau_{%s} $' % (l) for l in tyls ]
 else:
