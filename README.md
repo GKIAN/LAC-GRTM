@@ -20,6 +20,9 @@ Tche Liu @ Xiaofei Chen Research Group
 - Cao W., Zhang W. and Wang W., (2024). Acoustic wave simulation in strongly heterogeneous models using a discontinuous Galerkin method, *Geophysics*, 89(5), T251-T262, [DOI: 10.1190/geo2023-0525.1](https://doi.org/10.1190/geo2023-0525.1).
 - Jiang L. and Zhang W., (2024). Efficient implementation of equivalent medium parameterization in finite-difference seismic wave simulation methods, *Geophysical Journal International*, 239(1), 675-693, [DOI: 10.1093/gji/ggae286](https://doi.org/10.1093/gji/ggae286).
 - Sun W., Zhang W., Wang W. and Chen X., (2025). Multidomain finite-difference and Chebyshev pseudospectral hybrid method for elastic wave simulation: two-dimensional case. *Geophysical Journal International*, 240(1), 426-445, [DOI: 10.1093/gji/ggae395](https://doi.org/10.1093/gji/ggae395).
+- Sun W. and Zhang W., (2025). A two-dimensional non-conforming multidomain FDM/PSM hybrid method for elastic wave simulation. *Journal of
+  Geophysical Research: Solid Earth*, 130, e2024JB030912, [DOI: 10.1029/2024JB030912](https://doi.org/10.1029/2024JB030912).
+- Yu Z., Liu Q., Chen X., Zhang W. and Yu H., (2025). A curvilinear-Cartesian hybrid grid 3D finite-difference elastic wave simulation method based on multi-GPU platform. *Seismological Research Letters*, 96(6), 3612-3628, [DOI:10.1785/0220240254](https://doi.org/10.1785/0220240254).
 
 ## Usage
 
